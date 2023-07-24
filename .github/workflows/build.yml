@@ -1,0 +1,69 @@
+name: Build for Linux X86-64 on upstream commits
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 11 * * *'
+
+jobs:
+  build-lin64:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: gh_pm
+          fetch-depth: 0
+      - name: Pull
+        run: |
+          if [ "${{ github.event.schedule }}" == "" ] ; then touch _pulled_; fi
+          echo Polling upstram: `date`
+          old=`git log -1 --format=%H`
+          git config  user.email "gatk555@gmail.com"
+          git config  user.name "Giles Atkinson"
+          git config pull.rebase false
+          git pull https://git.code.sf.net/p/ngspice/ngspice pre-master
+          new=`git log -1 --format=%H`
+          if [ $new != $old ] ; then touch _pulled_; fi
+      - name: Install Dependencies
+        if: hashFiles('_pulled_') != ''
+        run: sudo apt-get install -y build-essential git make bison flex libtool autoconf automake libx11-dev libxaw7-dev libreadline-dev libxmu6 libxft2 libxrender1 libfreetype6 libfontconfig
+      - name: Clean /usr/local
+        if: hashFiles('_pulled_') != ''
+        run: |
+          cd /usr
+          sudo mv local l
+          sudo mkdir -m777 local
+      - name: Build
+        if: hashFiles('_pulled_') != ''
+        run: ./compile_linux.sh
+      - name: Save
+        if: hashFiles('_pulled_') != ''
+        uses: actions/upload-artifact@v3
+        with:
+          name: Ngspice pre-master, Linux X86-64
+          path: /usr/local
+      - name: Push
+        if: hashFiles('_pulled_') != ''
+        run: |
+          git push https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/gatk555/ngspice.git gh_pm
+      - name: Sweep
+        # Remove all but the latest failed workflow runs.
+        run: |
+          h1='--header="Accept: application/vnd.github+json"'
+          h2='--header="X-GitHub-Api-Version: 2022-11-28"'
+          h3='--header="Authorization: Bearer "'${{ secrets.GITHUB_TOKEN }}
+          for i in `wget -O - -q https://oauth2:${{ secrets.GITHUB_TOKEN }}@api.github.com/repos/gatk555/ngspice/actions/runs?status=failure | jq .workflow_runs[1:][].id`
+          do
+            echo Deleting run $i
+            eval wget -O -  -q $h1 $h2 $h3 --method=DELETE https://api.github.com/repos/gatk555/ngspice/actions/runs/$i
+          done
+      - name: Deliberately fail.
+        if: hashFiles('_pulled_') == ''
+        run: false
+      - name: Trigger others
+        # Remove all but the latest workflow runs.
+        run: |
+          h1='--header="Accept: application/vnd.github+json"'
+          h2='--header="X-GitHub-Api-Version: 2022-11-28"'
+          h3='--header="Authorization: Bearer "'${{ secrets.GITHUB_TOKEN }}
+          eval wget -q $h1 $h2 $h3 --post-data=\''{"ref":"ci"}'\' https://api.github.com/repos/gatk555/ngspice/actions/workflows/others.yml/dispatches
+
