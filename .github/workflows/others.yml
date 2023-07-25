@@ -1,9 +1,6 @@
 name: Build others
 on:
   workflow_dispatch:
-  push:
-    branches: [ci]
-    paths: '**/others.yml'
 
 jobs:
   build-macos-x86_64:
@@ -28,7 +25,6 @@ jobs:
         run: |
           cd release
           sudo make install
-          ls -ld /usr/local/*/ngspice
           cd ..
           mkdir build
           for i in bin lib share ; do
@@ -37,6 +33,11 @@ jobs:
           done
           echo Copying the examples.
           cp -r examples build/share/ngspice
+          echo Create README.ngspice
+          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
+          echo 'The source code came from the pre-master branch with head revision:' >> build/README.ngspice
+          echo >> build/README.ngspice
+          git log -1 >> build/README.ngspice
       - name: Save X86_64
         uses: actions/upload-artifact@v3
         with:
@@ -99,7 +100,6 @@ jobs:
         run: |
           cd release
           sudo make install
-          ls -ld /usr/local/*/ngspice
           cd ..
           mkdir build
           for i in bin lib share ; do
@@ -108,6 +108,11 @@ jobs:
           done
           echo Moving the examples.
           mv examples build/share/ngspice
+          echo Create README.ngspice
+          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
+          echo 'The source code came from the pre-master branch with head revision:' >> build/README.ngspice
+          echo >> build/README.ngspice
+          git log -1 >> build/README.ngspice
       - name: Save arm64
         uses: actions/upload-artifact@v3
         with:
