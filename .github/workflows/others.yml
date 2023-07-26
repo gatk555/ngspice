@@ -37,7 +37,7 @@ jobs:
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
           echo 'The source code came from the pre-master branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
-          git log -1 >> build/README.ngspice
+          git log -1 --skip=1 >> build/README.ngspice
       - name: Save X86_64
         uses: actions/upload-artifact@v3
         with:
@@ -112,7 +112,7 @@ jobs:
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
           echo 'The source code came from the pre-master branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
-          git log -1 >> build/README.ngspice
+          git log -1 --skip=1 >> build/README.ngspice
       - name: Save arm64
         uses: actions/upload-artifact@v3
         with:
