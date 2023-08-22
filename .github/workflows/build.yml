@@ -50,7 +50,7 @@ jobs:
       - name: Push
         if: hashFiles('_pulled_') != ''
         run: |
-          git push https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/gatk555/ngspice.git gh_pm
+          git push https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/gatk555/ngspice.git gh_pm42
       - name: Sweep
         # Remove all but the latest failed workflow runs.
         run: |
