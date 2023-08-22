@@ -20,7 +20,7 @@ jobs:
           git config  user.email "gatk555@gmail.com"
           git config  user.name "Giles Atkinson"
           git config pull.rebase false
-          git pull https://git.code.sf.net/p/ngspice/ngspice pre-master
+          git pull https://git.code.sf.net/p/ngspice/ngspice pre-master-42
           new=`git log -1 --format=%H`
           if [ $new != $old ] ; then touch _pulled_; fi
       - name: Install Dependencies
@@ -38,14 +38,14 @@ jobs:
           ./compile_linux.sh
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > /usr/local/README.ngspice
-          echo 'The source code came from the pre-master branch with head revision:' >> /usr/local/README.ngspice
+          echo 'The source code came from the pre-master-42 branch with head revision:' >> /usr/local/README.ngspice
           echo >> /usr/local/README.ngspice
           git log -1 --skip=1 >> /usr/local/README.ngspice
       - name: Save
         if: hashFiles('_pulled_') != ''
         uses: actions/upload-artifact@v3
         with:
-          name: Ngspice pre-master, Linux X86-64
+          name: Ngspice pre-master-42, Linux X86-64
           path: /usr/local
       - name: Push
         if: hashFiles('_pulled_') != ''
