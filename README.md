@@ -1,4 +1,4 @@
-This repository contains a copy of the main development branch (pre-master)
+This repository contains a copy of the main development branch (pre-master-42)
 of Ngspice (https://ngspice.sourceforge.io/) and scripts for Github Actions
 that run daily to update the copy and build it.  The resulting binaries
 can be found under the "Actions" tab above.  (Look for "artifacts".)
@@ -19,6 +19,6 @@ and ngspice will work correctly if environment variable SPICE_ROOT
 is set to that location.
 
 This branch is for Github Actions workflow files only, the ngspice source
-is on branch gh_pm.  There are currently two local changes to the source:
+is on branch gh_pm42.  There are currently two local changes to the source:
 code has been added to support SPICE_ROOT and the MacOS compile script
 has been modified to support cross-compiling for arm64.

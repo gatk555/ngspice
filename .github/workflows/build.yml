@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: gh_pm
+          ref: gh_pm42
           fetch-depth: 0
       - name: Pull
         run: |

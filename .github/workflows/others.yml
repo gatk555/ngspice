@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: gh_pm
+          ref: gh_pm42
       - name: Install Dependencies
         run: |
           brew install make automake bison
