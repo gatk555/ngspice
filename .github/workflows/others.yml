@@ -49,30 +49,6 @@ jobs:
           for i in bin lib share ; do
             sudo rm -rf /usr/local/$i/ngspice
           done
-      - name: Build arm64
-        run: |
-          PATH='/usr/local/opt/bison/bin:'$PATH
-          MORE_CFLAGS='-arch arm64'
-          ./compile_macos_clang.sh || true # Will fail to install
-          if [ ! -f release/src/ngspice ]; then false; fi
-      - name: Install arm64
-        run: |
-          cd release
-          sudo make install
-          ls -ld /usr/local/*/ngspice
-          cd ..
-          mkdir build
-          for i in bin lib share ; do
-            mkdir -p build/$i
-            cp -r /usr/local/$i/ngspice build/$i/
-          done
-          echo Moving the examples.
-          mv examples build/share/ngspice
-      - name: Save arm64
-        uses: actions/upload-artifact@v3
-        with:
-          name: Ngspice pre-master-42, Macos arm64
-          path: build
   build-macos-arm64:
     runs-on: macos-11
     steps:
@@ -116,5 +92,5 @@ jobs:
       - name: Save arm64
         uses: actions/upload-artifact@v3
         with:
-          name: Ngspice pre-master, Macos arm64
+          name: Ngspice pre-master-42, Macos arm64
           path: build
