@@ -25,7 +25,9 @@ jobs:
           if [ $new != $old ] ; then touch _pulled_; fi
       - name: Install Dependencies
         if: hashFiles('_pulled_') != ''
-        run: sudo apt-get install -y build-essential git make bison flex libtool autoconf automake libx11-dev libxaw7-dev libreadline-dev libxmu6 libxft2 libxrender1 libfreetype6 libfontconfig
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git make bison flex libtool autoconf automake libx11-dev libxaw7-dev libreadline-dev libxmu6 libxft2 libxrender1 libfreetype6 libfontconfig
       - name: Clean /usr/local
         if: hashFiles('_pulled_') != ''
         run: |
