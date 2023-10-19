@@ -1438,6 +1438,7 @@ int main(int argc, char **argv)
                         fclose(tempfile);
                         tempfile = tp;
                         Copy_of_argv = argv;
+printf("Copied argv %p: %s\n", argv, argv[optind]);
                         break;
                     } else {
                         fseek(tp, 0L, SEEK_SET);

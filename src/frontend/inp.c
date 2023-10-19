@@ -675,6 +675,7 @@ inp_spsource(FILE *fp, bool comfile, char *filename, bool intfile)
             while (Copy_of_argv[optind]) {
                 char c, *fmt;
 
+printf("Copy_of_argv %p: %p %s\n", Copy_of_argv, Copy_of_argv[optind], Copy_of_argv[optind]);
                 c = Copy_of_argv[optind][0];
                 if ((c >= '0' && c <= '9') || c == '+' || c == '-' || !c) {
                     /* Looks like a number or empty string - quote it. */
@@ -690,6 +691,7 @@ inp_spsource(FILE *fp, bool comfile, char *filename, bool intfile)
 
             /* Treat the buffer as a "set" command to create argv and argc. */
 
+printf("Set %s\n", p_buf_active);
             setarg = cp_lexer(p_buf_active);
             com_set(setarg);
             wl_free(setarg);
