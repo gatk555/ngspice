@@ -319,6 +319,10 @@
     </ClCompile>
     <ClCompile Include="icm\digital\d_xor\d_xor-ifspec.c" />
     <ClCompile Include="..\..\src\xspice\icm\dlmain.c" />
+    <ClCompile Include="icm\digital\d_cosim\d_cosim-ifspec.c" />
+    <ClCompile Include="icm\digital\d_cosim\d_cosim-cfunc.c">
+      <AdditionalIncludeDirectories>..\..\src\xspice\%(RelativeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\xspice\icm\digital\adc_bridge\cfunc.mod" />
