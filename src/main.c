@@ -1381,10 +1381,12 @@ int main(int argc, char **argv)
                 append_to_stream(tempfile, stdin);
             }
 
+printf("Processing args: argc = %d optind = %d\n", argc, optind);
             while (optind < argc) {
                 char *arg = argv[optind++];
                 FILE *tp;
 
+printf("Got arg %s\n", arg);
                 /* Copy the the path of the first filename only */
                 if (!Infile_Path) {
                     Infile_Path = ngdirname(arg);
