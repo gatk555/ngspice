@@ -27,6 +27,15 @@ end
 set noglob
 
 // Set parameters for Windows or Unix-like OS.
+// For setting CFLAGS (passed to Verilator) it is somewhat arbitrarily
+// assumed that if Ngspice was compiled with VisualC++, then that is
+// the compiler to be used with Verilator.  Edit to change.
+
+if $oscompiled = 8 // VisualC++
+   setcs cflags="--compiler msvc" // PIC is default?
+else
+   setcs cflags="--CFLAGS -fpic" // For g++
+end
 
 if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
    set windows=1
@@ -35,7 +44,9 @@ if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
 else
    set windows=0
    set dirsep1="/"
+   setcs cflags="--CFLAGS -fpic" // For g++
 end
+
 
 // Loop through the arguments to find Verilog source: some_path/xxxx.v
 // The output file will have the same base name.
@@ -99,8 +110,7 @@ setcs prefix="Vlng"
 // Compilation option for C/C++: -fpic is required by GCC for a shared library
 // and path to src/include/ngspice.
 
-setcs cflags="--CFLAGS -fpic"
-setcs include="--CFLAGS -I../../../src/include"
+setcs include="--CFLAGS -I../../include"
 
 // Run Verilator on the given input files.
 
@@ -197,8 +207,17 @@ shell verilator --Mdir $objdir --prefix $prefix $include $cflags
 
 // Make a shared library/DLL.
 
-set   v_objs="$objdir/shim.o $objdir/verilated.o $objdir/verilated_threads.o"
-setcs tail="__ALL.a"
-setcs v_lib="$objdir/$prefix$tail"          // Like Vlng___ALL.a
+if $oscompiled = 8 // VisualC++
+  set   v_objs="$objdir/shim.obj $objdir/verilated.obj $objdir/verilated_threads.obj"
+  setcs tail="__ALL.lib"
+  setcs v_lib="$objdir/$prefix$tail"          // Like Vlng___ALL.a
 
-shell g++ --shared $v_objs $v_lib -pthread -lpthread -latomic -o $soname
+  echo shell LINK /DLL /EXPORT:Cosim_setup  $v_objs $v_lib /OUT:$soname
+  shell LINK /DLL /EXPORT:Cosim_setup  $v_objs $v_lib /OUT:$soname
+else
+  set   v_objs="$objdir/shim.o $objdir/verilated.o $objdir/verilated_threads.o"
+  setcs tail="__ALL.a"
+  setcs v_lib="$objdir/$prefix$tail"          // Like Vlng___ALL.a
+
+  shell g++ --shared $v_objs $v_lib -pthread -lpthread -latomic -o $soname
+end
