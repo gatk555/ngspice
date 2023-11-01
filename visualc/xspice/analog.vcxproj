@@ -248,6 +248,8 @@
     <ClCompile Include="icm\analog\summer\summer-ifspec.c" />
     <ClCompile Include="icm\analog\s_xfer\s_xfer-cfunc.c" />
     <ClCompile Include="icm\analog\s_xfer\s_xfer-ifspec.c" />
+    <ClCompile Include="icm\analog\s_cond\s_cond-cfunc.c" />
+    <ClCompile Include="icm\analog\s_cond\s_cond-ifspec.c" />
     <ClCompile Include="icm\analog\triangle\triangle-cfunc.c" />
     <ClCompile Include="icm\analog\triangle\triangle-ifspec.c" />
     <ClCompile Include="icm\analog\file_source\file_source-cfunc.c" />
@@ -295,6 +297,8 @@
     <None Include="..\..\src\xspice\icm\analog\summer\ifspec.ifs" />
     <None Include="..\..\src\xspice\icm\analog\s_xfer\cfunc.mod" />
     <None Include="..\..\src\xspice\icm\analog\s_xfer\ifspec.ifs" />
+    <None Include="..\..\src\xspice\icm\analog\s_cond\cfunc.mod" />
+    <None Include="..\..\src\xspice\icm\analog\s_cond\ifspec.ifs" />
     <None Include="..\..\src\xspice\icm\analog\triangle\cfunc.mod" />
     <None Include="..\..\src\xspice\icm\analog\triangle\ifspec.ifs" />
     <None Include="..\..\src\xspice\icm\analog\file_source\cfunc.mod" />

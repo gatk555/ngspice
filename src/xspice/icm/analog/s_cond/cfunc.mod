@@ -17,6 +17,7 @@ MODIFICATIONS
 
     18 Apr 1991     Harry Li
     27 Sept 1991    Jeffrey P. Murray
+    1 Nov  2023     Giles Atkinson (conversion from s_xfer to s_cond)
 
 SUMMARY
 
@@ -168,16 +169,16 @@ NON-STANDARD FEATURES
 
 ==============================================================================*/
 
-/*=== CM_S_XFER ROUTINE ===*/
+/*=== CM_S_COND ROUTINE ===*/
 
 /****************************************
-* S-Domain Transfer Function -          *
+* S-Domain Conductance Function -       *
 *      Code Body                        *
 *                                       *
 * Last Modified - 9/27/91        JPM    *
 ****************************************/
 
-void cm_s_xfer(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
+void cm_s_cond(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
 {
         double *out;                 /* pointer to the output */
 	double *in;                  /* pointer to the input */
@@ -396,7 +397,7 @@ void cm_s_xfer(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
             if ( 0.0 == *(den_coefficient[0])) {
                 *out = 0.0;
             } else {
-                *out = *gain * (INPUT(in) + in_offset) *
+                *out = *gain * (INPUT(port) + in_offset) *
                          ( *(num_coefficient[0]) / *(den_coefficient[0]) );
             }
             pout_pin = 0.0;
@@ -407,7 +408,7 @@ void cm_s_xfer(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
              calculate pseudo-input which includes input
              offset and gain....                         ***/
 
-        *in = *gain * (INPUT(in)+in_offset);
+        *in = *gain * (INPUT(port)+in_offset);
 
         /*** Obtain the "new" input to the Controller
              Canonical topology, then propagate through
@@ -443,8 +444,8 @@ void cm_s_xfer(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
 
         /** Output values for DC & Transient **/
 
-        OUTPUT(out) = *out;
-        PARTIAL(out,in) = pout_pin;
+        OUTPUT(port) = *out;
+        PARTIAL(port, port) = pout_pin;
         // cm_analog_auto_partial(); // Removed again. Seems to have problems.
     }
 
@@ -512,7 +513,7 @@ void cm_s_xfer(ARGS)  /* structure holding parms, inputs, outputs, etc.     */
 
         ac_gain = cm_complex_div(acc_num, acc_den);
 
-        AC_GAIN(out,in) = ac_gain;
+        AC_GAIN(port, port) = ac_gain;
     }
 
     /* free all allocated memory */

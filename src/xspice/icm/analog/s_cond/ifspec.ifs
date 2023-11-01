@@ -8,32 +8,32 @@ Atlanta, Georgia 30332
 AUTHORS
 
     27 Sept 1991     Jeffrey P. Murray
+     1 Nov  2023     Giles Atkinson (conversion from s_xfer to s_cond)
 
 SUMMARY
 
     This file contains the interface specification file for the
-    analog s-domain transfer function (s_xfer) code model.
+    analog s-domain conductivity (s_cond) code model.
 
 ===============================================================================*/
 
 NAME_TABLE:
 
-Spice_Model_Name:      s_xfer
-C_Function_Name:       cm_s_xfer
-Description:           "s-domain transfer function block"
+Spice_Model_Name:      s_cond
+C_Function_Name:       cm_s_cond
+Description:           "s-domain conductivity function block"
 
 
 PORT_TABLE:
 
-
-Port_Name:           in               out
-Description:         "input"          "output"
-Direction:           in                out
-Default_Type:        v                 v
-Allowed_Types:       [v,vd,i,id]       [v,vd,i,id]
-Vector:              no                no
-Vector_Bounds:       -                 -
-Null_Allowed:        no                no
+Port_Name:           port
+Description:         "sole port"
+Direction:           inout
+Default_Type:        g
+Allowed_Types:       [g, gd, h, hd]
+Vector:              no
+Vector_Bounds:       -
+Null_Allowed:        no
 
 
 PARAMETER_TABLE:
@@ -54,7 +54,7 @@ Parameter_Name:     num_coeff                   den_coeff
 Description:        "numerator poly coef"       "denominator poly coef"
 Data_Type:          real                        real
 Default_Value:      -                           -
-Limits:             -                           -       
+Limits:             -                           -
 Vector:             yes                         yes
 Vector_Bounds:      [1 -]                       [1 -]
 Null_Allowed:       yes                         yes
@@ -65,7 +65,7 @@ PARAMETER_TABLE:
 Parameter_Name:     int_ic
 Description:        "int stage init. cond"
 Data_Type:          real
-Default_Value:      0.0				
+Default_Value:      0.0
 Limits:             -
 Vector:             yes
 Vector_Bounds:      -
