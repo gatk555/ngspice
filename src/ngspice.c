@@ -27,7 +27,7 @@ static IFparm nodeParms[] = {
 
 
 IFsimulator SIMinfo = {
-    "ngspice",                           /* my name */
+    "ngspice - s_cond TEST BUILD",                           /* my name */
     "Circuit level simulation program",  /* more about me */
     Spice_Version,                       /* my version */
 
