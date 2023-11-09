@@ -89,6 +89,4 @@ extern BOOLEAN hasSORConverged(double *, double *, int);
 extern BOOLEAN foundError(int );
 extern BOOLEAN compareFiletypeVar(char *);
 
-
-
 #endif
