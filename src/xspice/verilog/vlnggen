@@ -31,8 +31,10 @@ set noglob
 // assumed that if Ngspice was compiled with VisualC++, then that is
 // the compiler to be used with Verilator.  Edit to change.
 
-if $oscompiled = 8 // VisualC++
-   setcs cflags="--compiler msvc" // PIC is default?
+// Compilation option for C/C++: -fpic is required by GCC for a shared library
+
+if $oscompiled = 8 // VisualC++ - Verilator is a Perl script
+   setcs cflags="--CFLAGS -fpic --compiler msvc"
 else
    setcs cflags="--CFLAGS -fpic" // For g++
 end
@@ -41,12 +43,13 @@ if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
    set windows=1
    set dirsep1="\\"
    set dirsep2="/"
+   set vloc="C:/mingw64/bin/verilator" // Expected location on Windows
+   set run_verilator="perl $vloc"
 else
    set windows=0
    set dirsep1="/"
-   setcs cflags="--CFLAGS -fpic" // For g++
+   set run_verilator=verilator
 end
-
 
 // Loop through the arguments to find Verilog source: some_path/xxxx.v
 // The output file will have the same base name.
@@ -74,7 +77,7 @@ repeat $argc
     dowhile $off >= 0            // Strip leading directories
         strstr off "$base" "$dirsep1"
         if $off >= 0
-      	    let off=$off+1
+        let off=$off+1
             strslice base "$base" $&off $l
         end
     end
@@ -107,19 +110,15 @@ setcs soname="$base$tail"
 
 setcs prefix="Vlng"
 
-// Compilation option for C/C++: -fpic is required by GCC for a shared library
-// and path to src/include/ngspice.
-
-setcs include="--CFLAGS -I../../include"
-
 // Run Verilator on the given input files.
 
-shell verilator --Mdir $objdir --prefix $prefix $cflags --cc $argv
+shell $run_verilator --Mdir $objdir --prefix $prefix $cflags --cc $argv
 
 // Parse the primary interface Class definition for members representing
 // the ports of the top-level Verilog module.
 // Example conversion:  VL_IN8(&Clk,0,0); ==> VL_DATA(8,Clk,0,0)
 
+cd $objdir
 echo "/* Generated code: do not edit. */" > inouts.h
 echo "/* Generated code: do not edit. */" > inputs.h
 echo "/* Generated code: do not edit. */" > outputs.h
@@ -133,7 +132,7 @@ setcs inout="VL_INOUT"
 setcs in="VL_IN"
 setcs out="VL_OUT"
 
-set fn="$objdir/$prefix$htail" // Like foo-obj_dir/Vlng.h
+set fn="$prefix$htail" // Like foo-obj_dir/Vlng.h
 fopen fh $fn
 if $fh < 0
    quit
@@ -161,7 +160,7 @@ while 1
        let off = $off + 8                     // strlen("VL_INOUT") == 8
        strslice line "$line" $&off $l
        strstr off "$line" "("
-       strslice size "$line" 0 $off 
+       strslice size "$line" 0 $off
        let off = $off + 2                     // strlen("(&") == 2
        strslice line "$line" $&off $l
        echo VL_DATA($size,$line >> inouts.h   // New macro invocation
@@ -175,7 +174,7 @@ while 1
        let off = $off + 5                     // strlen("VL_IN") == 5
        strslice line "$line" $&off $l
        strstr off "$line" "("
-       strslice size "$line" 0 $off 
+       strslice size "$line" 0 $off
        let off = $off + 2                     // strlen("(&") == 2
        strslice line "$line" $&off $l
        echo VL_DATA($size,$line >> inputs.h   // New macro invocation
@@ -189,7 +188,7 @@ while 1
        let off = $off + 6                     // strlen("VL_OUT") == 6
        strslice line "$line" $&off $l
        strstr off "$line" "("
-       strslice size "$line" 0 $off 
+       strslice size "$line" 0 $off
        let off = $off + 2                     // strlen("(&") == 2
        strslice line "$line" $&off $l
        echo VL_DATA($size,$line >> outputs.h  // New macro invocation
@@ -197,27 +196,96 @@ while 1
     end
 end
 fclose $fh
+cd ..
+
+// The shared library/DLL contains some ngspice source code as
+// well as that created by Verilator.  Find it by scanning $sourcepath.
+
+set shimfile=verilator_shim.cpp
+set shimobj=verilator_shim.o
+set mainfile=verilator_main.cpp
+set srcdir=src
+set silent_fileio // Silences fopen complaints
+
+let i=1
+repeat $#sourcepath
+  set stem="$sourcepath[$&i]"
+  let i = i + 1
+  set fn="$stem$dirsep1$shimfile"
+  fopen fh $fn
+  if $fh > 0
+     break
+  end
+  set stem="$stem$dirsep1$srcdir"
+  set fn="$stem$dirsep1$shimfile"
+  fopen fh $fn
+  if $fh > 0
+     break
+  end
+end
+
+if $fh > 0
+   fclose $fh
+   set fn_main="$stem$dirsep1$mainfile"
+else
+   echo Can not find C++ source file $shimfile
+   quit
+end
+
+// Some header files are with the source.
+
+strstr off "$stem" "."
+if $off <> 0
+   setcs include="--CFLAGS -I$stem"
+else
+   setcs include="--CFLAGS -I..$dirsep1$stem" // Relative path
+end
 
 // Compile the generated C++ code along with shim.cpp.  Verilator only
 // does this when building an executable binary, so include main.cpp.
 
-shell verilator --Mdir $objdir --prefix $prefix $include $cflags
+shell $run_verilator --Mdir $objdir --prefix $prefix $include $cflags
 + --cc --build --exe
-+ main.cpp shim.cpp $argv
++ $fn_main $fn $argv
 
-// Make a shared library/DLL.
+strcmp bad "$shellstatus" "0"
+if $bad = 0
+   // g++ must be available: make a shared library/DLL.
 
-if $oscompiled = 8 // VisualC++
-  set   v_objs="$objdir/shim.obj $objdir/verilated.obj $objdir/verilated_threads.obj"
-  setcs tail="__ALL.lib"
-  setcs v_lib="$objdir/$prefix$tail"          // Like Vlng___ALL.a
+   set   v_objs="$objdir$dirsep1$shimobj $objdir/verilated.o $objdir/verilated_threads.o"
+   setcs tail="__ALL.a"
+   setcs v_lib="$objdir/$prefix$tail"          // Like Vlng__ALL.a
 
-  echo shell LINK /DLL /EXPORT:Cosim_setup  $v_objs $v_lib /OUT:$soname
-  shell LINK /DLL /EXPORT:Cosim_setup  $v_objs $v_lib /OUT:$soname
+   shell g++ --shared $v_objs $v_lib -pthread -lpthread -latomic -o $soname
 else
-  set   v_objs="$objdir/shim.o $objdir/verilated.o $objdir/verilated_threads.o"
-  setcs tail="__ALL.a"
-  setcs v_lib="$objdir/$prefix$tail"          // Like Vlng___ALL.a
+   // Assume we have CL.EXE and use that.  A script avoids multiple \escapes.
 
-  shell g++ --shared $v_objs $v_lib -pthread -lpthread -latomic -o $soname
+   if $windows = 0
+      quit
+   end
+
+   // Look for Verilator_MSVC.com
+
+   set msvcfile=MSVC.COM
+   let i=1
+   repeat $#sourcepath
+     set stem="$sourcepath[$&i]"
+     let i = i + 1
+     set fn="$stem$dirsep1$msvcfile"
+     fopen fh $fn
+     if $fh > 0
+        break
+     end
+   end
+   if $fh > 0
+     fclose $fh
+   else
+      echo Can not find bulid file $msvcfile
+      quit
+   end
+
+   echo Building with MSVC compiler, CL.EXE.
+   cd $objdir
+   shell $msvcfile
+   cd ..
 end

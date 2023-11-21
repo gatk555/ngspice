@@ -1,7 +1,7 @@
 /* Dummy main() for Verilator. */
 
-#include "../../include/ngspice/cmtypes.h" // For Digital_t
-#include "../../include/ngspice/cosim.h"   // For struct co_info and prototypes
+#include "ngspice/cmtypes.h" // For Digital_t
+#include "ngspice/cosim.h"   // For struct co_info and prototypes
 
 int main(int argc, char** argv, char**) {
     struct co_info info;

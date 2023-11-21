@@ -6,8 +6,8 @@
 #include "verilated.h"
 #include "Vlng.h"
 
-#include "../../include/ngspice/cmtypes.h" // For Digital_t
-#include "../../include/ngspice/cosim.h"   // For struct co_info and prototypes
+#include "ngspice/cmtypes.h" // For Digital_t
+#include "ngspice/cosim.h"   // For struct co_info and prototypes
 
 //======================
 
