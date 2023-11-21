@@ -24,6 +24,14 @@ static struct {
     char       *name;
 } Open_Files[MAX_OPEN_FILES];
 
+/* Check whether error messages should be suppressed.  That is useful when
+ * opening a file to see if it exists.
+ */
+
+static int verbose(void)
+{
+    return !cp_getvar("silent_fileio", CP_BOOL, NULL, 0);
+}
 /* fopen handle file_name [mode]
  *
  * For example: fopen handle result.txt r
@@ -60,9 +68,11 @@ void com_fopen(wordlist *wl)
             fd = -1;
         }
     } else {
-        fprintf(stderr, "com_fopen() cannot open %s: %s\n",
-                    file_name, strerror(errno));
         fd = -1;
+        if (verbose()) {
+            fprintf(stderr, "com_fopen() cannot open %s: %s\n",
+                    file_name, strerror(errno));
+        }
     }
     tfree(file_name);
     if (wl)
@@ -99,7 +109,7 @@ void com_fread(wordlist *wl)
             /* Allow stdin, for example. */
 
             Open_Files[fd].fp = fdopen(fd, "r");
-            if (!Open_Files[fd].fp) {
+            if (!Open_Files[fd].fp && verbose()) {
                 fprintf(stderr, "com_fread() cannot open handle %d\n", fd);
                 goto err;
             }
@@ -115,7 +125,7 @@ void com_fread(wordlist *wl)
                     --length;
                 }
                 buf[length] = '\0';
-            } else {
+            } else if (verbose()) {
                 fprintf(stderr,
                         "com_fread() found line in %s "
                         "too long for buffer\n",
@@ -124,7 +134,7 @@ void com_fread(wordlist *wl)
         } else {
             if (feof(Open_Files[fd].fp)) {
                 length = -1;
-            } else {
+            } else if (verbose()) {
                 fprintf(stderr,
                         "com_fread() error reading %s: %s\n",
                         Open_Files[fd].name, strerror(errno));
@@ -132,7 +142,7 @@ void com_fread(wordlist *wl)
             }
             *buf = '\0';
         }
-    } else {
+    } else if (verbose()) {
         fprintf(stderr,
                 "com_fread(): file handle %d is not in accepted range.\n",
                 fd);
