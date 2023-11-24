@@ -59,8 +59,7 @@ copy %1\ngspice.exe %dst%\bin\
 copy ..\..\fftw-3.3-dll64\libfftw3-3.dll %dst%\bin\
 
 :end
-mkdir %dst%\share\ngspice\scripts
-mkdir %dst%\share\ngspice\scripts\src
+mkdir %dst%\share\ngspice\scripts\src\ngspice
 copy .\spinit_all %dst%\share\ngspice\scripts\spinit
 copy .\spinitr .\spinit
 cd ..\src
@@ -72,6 +71,6 @@ copy spectrum %dst%\share\ngspice\scripts
 copy xspice\verilog\vlnggen %dst%\share\ngspice\scripts
 copy xspice\verilog\MSVC.COM %dst%\share\ngspice\scripts
 copy xspice\verilog\*.cpp %dst%\share\ngspice\scripts\src
-copy include\ngspice\cosim.h %dst%\share\ngspice\scripts\src
-copy include\ngspice\miftypes.h %dst%\share\ngspice\scripts\src
-copy include\ngspice\cmtypes.h %dst%\share\ngspice\scripts\src
+copy include\ngspice\cosim.h %dst%\share\ngspice\scripts\src\ngspice
+copy include\ngspice\miftypes.h %dst%\share\ngspice\scripts\src\ngspice
+copy include\ngspice\cmtypes.h %dst%\share\ngspice\scripts\src\ngspice

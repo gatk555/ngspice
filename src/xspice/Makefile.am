@@ -14,8 +14,10 @@ initdatadir = $(pkgdatadir)/scripts
 initdata_DATA = verilog/vlnggen
 
 initdata1dir = $(pkgdatadir)/scripts/src
-initdata1_DATA = verilog/verilator_shim.cpp verilog/verilator_main.cpp \
-                 ../include/ngspice/cosim.h ../include/ngspice/miftypes.h \
+initdata1_DATA = verilog/verilator_shim.cpp verilog/verilator_main.cpp
+
+initdata2dir = $(pkgdatadir)/scripts/src/ngspice
+initdata2_DATA = ../include/ngspice/cosim.h ../include/ngspice/miftypes.h \
                  ../include/ngspice/cmtypes.h 
 dist-hook:
 	rm -f "$(distdir)/icm/makedefs"
