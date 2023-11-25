@@ -76,6 +76,11 @@ repeat $argc
 
     dowhile $off >= 0            // Strip leading directories
         strstr off "$base" "$dirsep1"
+	if $windows
+	   if $off < 0
+	      strstr off "$base" "$dirsep2"
+	   end
+	end
         if $off >= 0
         let off=$off+1
             strslice base "$base" $&off $l
@@ -232,16 +237,29 @@ else
    quit
 end
 
-// Some header files are with the source.
+if $windows
+   // Verilator makes a mess of absolute include paths passed by --CFLAGS.
+   // Copy the files instead.
 
-strstr off "$stem" "."
-if $off <> 0
-   setcs include="--CFLAGS -I$stem"
+   set incdir=ngspice
+   shell xcopy /i "$stem$dirsep1$incdir" "$objdir$dirsep1$incdir"
+   setcs include="--CFLAGS -I."
+
+   // Copy verilator_shim.cpp for MSVC.CMD.
+
+   shell copy "$fn" "$objdir"
 else
-   setcs include="--CFLAGS -I..$dirsep1$stem" // Relative path
+   // Some header files are with the source.
+
+   strstr off "$stem" "."
+   if $off <> 0
+      setcs include="--CFLAGS -I$stem"
+   else
+      setcs include="--CFLAGS -I..$dirsep1$stem" // Relative path
+   end
 end
 
-// Compile the generated C++ code along with shim.cpp.  Verilator only
+
 // does this when building an executable binary, so include main.cpp.
 
 shell $run_verilator --Mdir $objdir --prefix $prefix $include $cflags
@@ -264,9 +282,9 @@ else
       quit
    end
 
-   // Look for Verilator_MSVC.com
+   // Look for MSVC.CMD
 
-   set msvcfile=MSVC.COM
+   set msvcfile=MSVC.CMD
    let i=1
    repeat $#sourcepath
      set stem="$sourcepath[$&i]"
@@ -286,6 +304,6 @@ else
 
    echo Building with MSVC compiler, CL.EXE.
    cd $objdir
-   shell $msvcfile
+   shell $fn
    cd ..
 end
