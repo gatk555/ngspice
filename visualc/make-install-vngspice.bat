@@ -69,7 +69,7 @@ copy devload %dst%\share\ngspice\scripts
 copy setplot %dst%\share\ngspice\scripts
 copy spectrum %dst%\share\ngspice\scripts
 copy xspice\verilog\vlnggen %dst%\share\ngspice\scripts
-copy xspice\verilog\MSVC.COM %dst%\share\ngspice\scripts
+copy xspice\verilog\MSVC.CMD %dst%\share\ngspice\scripts
 copy xspice\verilog\*.cpp %dst%\share\ngspice\scripts\src
 copy include\ngspice\cosim.h %dst%\share\ngspice\scripts\src\ngspice
 copy include\ngspice\miftypes.h %dst%\share\ngspice\scripts\src\ngspice
