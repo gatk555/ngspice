@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: gh_pm42
+          ref: gh_pm43
       - name: Install Dependencies
         run: |
           brew install make automake bison
@@ -35,13 +35,13 @@ jobs:
           cp -r examples build/share/ngspice
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-42 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-43 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 --skip=1 >> build/README.ngspice
       - name: Save X86_64
         uses: actions/upload-artifact@v3
         with:
-          name: Ngspice pre-master-42, Macos X86_64
+          name: Ngspice pre-master-43, Macos X86_64
           path: build
       - name: Clean
         run: |
@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: gh_pm42
+          ref: gh_pm43
       - name: Install Dependencies
         run: |
           brew install automake bison
@@ -86,11 +86,11 @@ jobs:
           mv examples build/share/ngspice
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-42 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-43 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 --skip=1 >> build/README.ngspice
       - name: Save arm64
         uses: actions/upload-artifact@v3
         with:
-          name: Ngspice pre-master-42, Macos arm64
+          name: Ngspice pre-master-43, Macos arm64
           path: build
