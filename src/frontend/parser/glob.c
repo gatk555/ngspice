@@ -79,13 +79,16 @@ static inline void strip_1st_char(wordlist *wl_node);
 static void tilde_expand_word(wordlist *wl_node);
 
 
-/* For each word, go through two steps: expand the {}'s, and then do ?*[]
- * globbing in them. Sort after the second phase but not the first...
+/* For each word, go through two steps: expand the {}'s, and then do
+ * tilde-expansion in them (not available of Windows).
  *
  * Globbing of arbitrary levels of brace nesting and tilde expansion to the
- * name of a "HOME" directory are supported. ?*[] are not */
+ * name of a "HOME" directory are supported. File globbing (?*[]) is not */
 wordlist *cp_doglob(wordlist *wlist)
 {
+    if (cp_noglob)
+        return wlist;
+
     /* Expand {a,b,c} */
     {
         wordlist *wl = wlist;
@@ -737,6 +740,7 @@ static void wl_modify_word(wordlist *wl_node, unsigned int n_input,
                 p_dst += n_char_word_cur;
             }
             *p_dst = '\0';
+            tfree(pp_word[0]);
         }
     }
 

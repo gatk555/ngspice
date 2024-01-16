@@ -1,6 +1,7 @@
 /* 
  * This file is part of the OSDI component of NGSPICE.
  * Copyright© 2022 SemiMod GmbH.
+ * Copyright© 2023 Pascal Kuthe.
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +10,13 @@
  * Author: Pascal Kuthe <pascal.kuthe@semimod.de>
  */
 
+#include "ngspice/config.h"
 #include "ngspice/hash.h"
 #include "ngspice/memory.h"
 #include "ngspice/stringutil.h"
 #include "osdidefs.h"
 
+#include <stddef.h>
 #include <sys/stat.h>
 
 #include "osdi.h"
@@ -199,21 +202,53 @@ static char *resolve_input_path(const char *name) {
   return NULL;
 } /* end of function inp_pathresolve_at */
 
+static size_t pad_to_align(size_t alignment, size_t size) {
+  size_t padding = alignment - size % alignment;
+  if (padding == alignment) {
+    return size;
+  }
+  return padding + size;
+}
 /**
  * Calculates the offset that the OSDI instance data has from the beginning of
  * the instance data allocated by ngspice. This offset is non trivial because
  * ngspice must store the terminal pointers before the remaining instance
  * data. As a result the offset is not constant and a variable amount of
- * padding must be inserted to ensure correct alginment.
+ * padding must be inserted to ensure correct alignment.
  */
 static size_t calc_osdi_instance_data_off(const OsdiDescriptor *descr) {
   size_t res = sizeof(GENinstance) /* generic data */
                + descr->num_terminals * sizeof(int);
-  size_t padding = sizeof(max_align_t) - res % sizeof(max_align_t);
-  if (padding == sizeof(max_align_t)) {
-    padding = 0;
-  }
-  return res + padding;
+  // KLU pointers
+#ifdef KLU
+  res = pad_to_align(alignof(double *), res);
+  res += ((size_t)descr->num_jacobian_entries) * 2 * sizeof(double *);
+#endif
+  // noise values
+  res = pad_to_align(alignof(double), res);
+  res += NSTATVARS * (descr->num_noise_src + 1) * sizeof(double);
+  return pad_to_align(alignof(max_align_t), res);
+}
+
+#ifdef KLU
+static size_t calc_osdi_instance_matrix_off(const OsdiDescriptor *descr) {
+  size_t res = sizeof(GENinstance) /* generic data */
+               + descr->num_terminals * sizeof(int);
+  return pad_to_align(alignof(double *), res);
+}
+#endif
+
+static size_t calc_osdi_noise_off(const OsdiDescriptor *descr) {
+  size_t res = sizeof(GENinstance) /* generic data */
+               + descr->num_terminals * sizeof(int);
+  // KLU pointers
+#ifdef KLU
+  res = pad_to_align(alignof(double *), res);
+  res += ((size_t)descr->num_jacobian_entries) * 2 * sizeof(double *);
+#endif
+  // noise values
+  res = pad_to_align(alignof(double), res);
+  return res;
 }
 
 #define INVALID_OBJECT                                                         \
@@ -300,7 +335,7 @@ extern OsdiObjectFile load_object_file(const char *input) {
    * multiple times. We use the handle as a key because the same SO will always
    * return the SAME pointer as long as dlclose is not called.
    * nghash_insert returns NULL if the key (handle) was not already in the table
-   * and the data (DUMMYDATA) that was previously insered (!= NULL) otherwise*/
+   * and the data (DUMMYDATA) that was previously inserted (!= NULL) otherwise*/
   if (nghash_insert(known_object_files, handle, DUMMYDATA)) {
     txfree(path);
     return EMPTY_OBJECT;
@@ -380,12 +415,19 @@ extern OsdiObjectFile load_object_file(const char *input) {
     }
 
     size_t inst_off = calc_osdi_instance_data_off(descr);
+    size_t noise_off = calc_osdi_noise_off(descr);
     dst[i] = (OsdiRegistryEntry){
         .descriptor = descr,
         .inst_offset = (uint32_t)inst_off,
+        .noise_offset = (uint32_t)noise_off,
         .dt = dt,
         .temp = temp,
         .has_m = has_m,
+
+#ifdef KLU
+        .matrix_ptr_offset = (uint32_t)calc_osdi_instance_matrix_off(descr),
+#endif
+
     };
   }
 
@@ -394,6 +436,21 @@ extern OsdiObjectFile load_object_file(const char *input) {
       .entrys = dst,
       .num_entries = (int)OSDI_NUM_DESCRIPTORS,
   };
+}
+
+#ifdef KLU
+inline size_t osdi_instance_matrix_ptr_off(const OsdiRegistryEntry *entry) {
+  return entry->matrix_ptr_offset;
+}
+inline double **osdi_instance_matrix_ptr(const OsdiRegistryEntry *entry,
+                                         GENinstance *inst) {
+  return (double **)(((char *)inst) + osdi_instance_matrix_ptr_off(entry));
+}
+#endif
+
+inline double *osdi_noise_data(const OsdiRegistryEntry *entry,
+                                         GENinstance *inst) {
+  return (double *)(((char *)inst) + entry->noise_offset);
 }
 
 inline size_t osdi_instance_data_off(const OsdiRegistryEntry *entry) {

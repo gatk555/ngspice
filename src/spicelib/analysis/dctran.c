@@ -2,6 +2,7 @@
 Copyright 1990 Regents of the University of California.  All rights reserved.
 Author: 1985 Thomas L. Quarles
 Modified: 2000  AlansFixes
+Modified: 2023 XSPICE breakpoint fix for shared ngspice by Vyacheslav Shevchuk
 **********/
 
 /* subroutine to do DC TRANSIENT analysis
@@ -94,6 +95,8 @@ DCtran(CKTcircuit *ckt,
     int numNames;
     double maxstepsize = 0.0;
 
+    bool have_autostop = FALSE, flag_autostop = FALSE;
+
     int ltra_num;
     CKTnode *node;
 #ifdef XSPICE
@@ -104,6 +107,25 @@ DCtran(CKTcircuit *ckt,
     double         ipc_last_time = 0.0;
     double         ipc_last_delta = 0.0;
 /* gtri - end - wbk - 12/19/90 - Add IPC stuff */
+
+    // Fix for sharedsync olddelta: When DCTran processes
+    // either analog or XSPICE breakpoint, then it subtracts delta from
+    // ckt->CKTtime. It sends 0 as olddelta after analog breakpoint
+    // processing. Still, for XSPICE breakpoints it subtracts delta (see code
+    // 'else if(g_mif_info.breakpoint.current < ckt->CKTtime)' branch) and
+    // then sends non zero olddelta to sharedsync at the end of the function
+    // (see chkStep: label). Thus olddelta is subtracted twice. Then
+    // ckt->CKTtime becomes less than last_accepted_time.
+    // xspice_breakpoints_processed 0:
+    // XSPICE models didn't have breakpoints in [last_accepted_time, CKTtime].
+    // xspice_breakpoints_processed 1:
+    // convergence criteria are satisfied but XSPICE breakpoint(s) is in the
+    // time interval [last_accepted_time, CKTtime].
+    int xspice_breakpoints_processed = 0;
+
+#ifdef SHARED_MODULE
+    double olddelta_for_shared_sync = 0.0;
+#endif // SHARED_MODULE
 #endif
 #if defined CLUSTER || defined SHARED_MODULE
     int redostep;
@@ -183,6 +205,8 @@ DCtran(CKTcircuit *ckt,
         firsttime = 1;
         save_mode = (ckt->CKTmode&MODEUIC) | MODETRANOP | MODEINITJCT;
         save_order = ckt->CKTorder;
+
+        have_autostop = cp_getvar("autostop", CP_BOOL, NULL, 0);
 
 /* Add breakpoints here which have been requested by the user setting the
    stop command as 'stop when time = xx'.
@@ -466,8 +490,14 @@ DCtran(CKTcircuit *ckt,
 /* gtri - end - wbk - Update event queues/data for accepted timepoint */
 #endif
     ckt->CKTstat->STAToldIter = ckt->CKTstat->STATnumIter;
-    if (check_autostop("tran") ||
-        ckt->CKTfinalTime - ckt->CKTtime < ckt->CKTminBreak) {
+    /* check for the end of the tran simulation, either by< stop time given,
+       or final time has been reached. */
+    if (have_autostop)
+    /* time consuming autostop check only, when variable 'autostop' has been set
+       before tran is started.*/
+        flag_autostop = check_autostop("tran");
+    /* If CKTtime and CKTfinalTime are almost equal, then finish */
+    if (flag_autostop || AlmostEqualUlps(ckt->CKTtime, ckt->CKTfinalTime, 100)) {
 #ifdef STEPDEBUG
         printf(" done:  time is %g, final time is %g, and tol is %g\n",
         ckt->CKTtime, ckt->CKTfinalTime, ckt->CKTminBreak);
@@ -480,6 +510,10 @@ DCtran(CKTcircuit *ckt,
             ckt->CKTsenInfo->SENmode = save;
         }
 #endif
+        if (flag_autostop)
+            fprintf(stdout, "\nNote: Autostop after %e s, all measurement conditions are fulfilled.\n", ckt->CKTtime);
+
+        /* Final return from tran*/
         return(OK);
     }
     if(SPfrontEnd->IFpauseTest()) {
@@ -666,7 +700,7 @@ resume:
     } /* end if there are event instances */
 
 /* gtri - end - wbk - Do event solution */
-#else
+#else /* no XSPICE */
 
 #ifdef CLUSTER
     if(!CLUsync(ckt->CKTtime,&ckt->CKTdelta,0)) {
@@ -683,7 +717,7 @@ resume:
         ckt->CKTdelmin, 0, &ckt->CKTstat->STATrejected, 0);
 #endif
 
-#endif
+#endif  /* no XSPICE */
     for(i=5; i>=0; i--)
         ckt->CKTdeltaOld[i+1] = ckt->CKTdeltaOld[i];
     ckt->CKTdeltaOld[0] = ckt->CKTdelta;
@@ -708,6 +742,7 @@ resume:
         ckt->CKTcurrentAnalysis = DOING_TRAN;
 
 /* gtri - end - wbk - 4/17/91 - Fix Berkeley bug */
+        xspice_breakpoints_processed = 0;
 #endif
         olddelta=ckt->CKTdelta;
         /* time abort? */
@@ -752,14 +787,6 @@ resume:
 
         converged = NIiter(ckt,ckt->CKTtranMaxIter);
 
-#ifdef XSPICE
-        if(ckt->evt->counts.num_insts > 0) {
-            g_mif_info.circuit.evt_step = ckt->CKTtime;
-            EVTcall_hybrids(ckt);
-        }
-/* gtri - end - wbk - Call all hybrids */
-
-#endif
         ckt->CKTstat->STATtimePts ++;
         ckt->CKTmode = (ckt->CKTmode&MODEUIC)|MODETRAN | MODEINITPRED;
         if(firsttime) {
@@ -795,12 +822,15 @@ resume:
 #ifdef XSPICE
 /* gtri - begin - wbk - Add Breakpoint stuff */
 
-        /* Force backup if temporary breakpoint is < current time */
         } else if(g_mif_info.breakpoint.current < ckt->CKTtime) {
+            /* Force backup if temporary breakpoint is < current time */
+
+        past_breakpoint:
             ckt->CKTsaveDelta = ckt->CKTdelta;
             ckt->CKTtime -= ckt->CKTdelta;
             ckt->CKTdelta = g_mif_info.breakpoint.current - ckt->CKTtime;
             g_mif_info.breakpoint.last = ckt->CKTtime + ckt->CKTdelta;
+            xspice_breakpoints_processed = 1;
 
             if(firsttime) {
                 ckt->CKTmode = (ckt->CKTmode&MODEUIC)|MODETRAN | MODEINITTRAN;
@@ -843,6 +873,27 @@ resume:
                 return(error);
             }
             if (newdelta > .9 * ckt->CKTdelta) {
+#if defined(XSPICE)
+                /* The timestep has succeeded.  XSPICE instances with
+                 * both analog and event ports ("hybrids") and others
+                 * that have called cm_irreversible() receive an EVENT
+                 * call here that allows them to capture their final
+                 * port values and advance co-simulations.  As this is an EVENT
+                 * call, they are not expected to do any integrations,
+                 * so there is no need for a further convergence test.
+                 */
+
+                if (ckt->evt->counts.num_hybrids > 0) {
+                    g_mif_info.circuit.evt_step = ckt->CKTtime;
+                    EVTcall_hybrids(ckt);
+                    if (g_mif_info.breakpoint.current < ckt->CKTtime) {
+                        /* A hybrid requested a breakpoint in the past. */
+
+                        goto past_breakpoint;
+                    }
+                }
+#endif
+
                 if ((ckt->CKTorder == 1) && (ckt->CKTmaxOrder > 1)) { /* don't rise the order for backward Euler */
                     newdelta = ckt->CKTdelta;
                     ckt->CKTorder = 2;
@@ -857,6 +908,7 @@ resume:
                 }
                 /* time point OK  - 630 */
                 ckt->CKTdelta = newdelta;
+
 #ifdef NDEV
                 if (!ft_norefprint) {
                     /* show a time process indicator, by Gong Ding, gdiso@ustc.edu */
@@ -931,8 +983,24 @@ resume:
 #ifdef XSPICE
 /* gtri - begin - wbk - Do event backup */
 
-        if(ckt->evt->counts.num_insts > 0)
+        if(ckt->evt->counts.num_insts > 0) {
+#ifdef SHARED_MODULE
+            double discard_start_time = ckt->CKTtime + ckt->CKTdelta;
+            // ngspice in executable mode subtracts olddelta from the time
+            // before new delta calculation, but it keeps delta in CKTtime and
+            // postpones subtraction in library mode. Delayed subtraction leads
+            // to incorrect points dropping because ckt->CKTdelta is almost always
+            // less than olddelta if there are convergence issues, and EVTbackup
+            // may drop valid events that need to be processed within
+            // [last_accepted_time, last_accepted_time + ckt->CKTdelta] range
+            // after delta adjustment.
+            if (redostep && xspice_breakpoints_processed == 0)
+                discard_start_time -= olddelta;
+            EVTbackup(ckt, discard_start_time);
+#else
             EVTbackup(ckt, ckt->CKTtime + ckt->CKTdelta);
+#endif
+        }
 
 /* gtri - end - wbk - Do event backup */
 #endif
@@ -959,10 +1027,25 @@ resume:
            function.
         */
 chkStep:
+#ifdef XSPICE
+       // There is no need to subtract olddelta from ckt->CKTtime one more time
+       // if it has been subtracted during XSPICE breakpoint processing.
+       // olddelta will be reinitialized on
+       // the new iteration, so it reassigning here should be safe. It can't be
+       // zeroed during breakpoint processing because it takes part in the
+       // "timestep too small" check.
+        olddelta_for_shared_sync = olddelta;
+        if (xspice_breakpoints_processed)
+                 olddelta_for_shared_sync = 0.0;
+        if(sharedsync(&ckt->CKTtime, &ckt->CKTdelta, olddelta_for_shared_sync, ckt->CKTfinalTime,
+                 ckt->CKTdelmin, redostep, &ckt->CKTstat->STATrejected, 1) == 0)
+            goto nextTime;
+#else
         if(sharedsync(&ckt->CKTtime, &ckt->CKTdelta, olddelta, ckt->CKTfinalTime,
                  ckt->CKTdelmin, redostep, &ckt->CKTstat->STATrejected, 1) == 0)
             goto nextTime;
-#endif
+#endif // XSPICE
+#endif // SHARED_MODULE
 
     }
     /* NOTREACHED */

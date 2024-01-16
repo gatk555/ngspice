@@ -31,7 +31,6 @@ typedef struct sVCCSinstance {
     const int VCCScontPosNode;    /* number of positive node of controlling source */
     const int VCCScontNegNode;    /* number of negative node of controlling source */
 
-    double VCCSinitCond;    /* initial condition (of controlling source) */
     double VCCScoeff;       /* coefficient */
     double VCCSmValue;      /* Parallel multiplier */
 
@@ -48,6 +47,13 @@ typedef struct sVCCSinstance {
 
     int  VCCSsenParmNo;   /* parameter # for sensitivity use;
             set equal to  0 if not a design parameter*/
+
+#ifdef KLU
+    BindElement *VCCSposContPosBinding ;
+    BindElement *VCCSposContNegBinding ;
+    BindElement *VCCSnegContPosBinding ;
+    BindElement *VCCSnegContNegBinding ;
+#endif
 
 } VCCSinstance ;
 

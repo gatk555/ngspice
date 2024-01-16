@@ -11,15 +11,23 @@
 
 #pragma once
 
+#include "ngspice/config.h"
 #include "ngspice/devdefs.h"
 #include <stdint.h>
 
 typedef struct OsdiRegistryEntry {
   const void *descriptor;
   uint32_t inst_offset;
+  uint32_t noise_offset;
   uint32_t dt;
   uint32_t temp;
+
   bool has_m;
+
+#ifdef KLU
+  uint32_t matrix_ptr_offset;
+#endif
+
 } OsdiRegistryEntry;
 
 typedef struct OsdiObjectFile {

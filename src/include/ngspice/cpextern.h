@@ -67,7 +67,8 @@ extern wordlist *cp_parse(char *string);
 
 /* control.c */
 
-extern bool cp_cwait;
+extern bool cp_cwait;        // Interactive and awaiting command input.
+extern bool cp_background;   // Running in background.
 extern bool cp_dounixcom;
 extern char *cp_csep;
 extern char * get_alt_prompt(void);
@@ -155,7 +156,6 @@ extern bool cp_ignoreeof;
 extern bool cp_noclobber;
 extern bool cp_noglob;
 extern bool cp_nonomatch;
-extern char cp_dol;
 extern void cp_remvar(char *varname);
 void cp_vset(const char *varname, enum cp_types type, const void *value);
 extern struct variable *cp_setparse(wordlist *wl);

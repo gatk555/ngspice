@@ -31,8 +31,13 @@ Modified: 2001 AlansFixes
 /* gtri - end - wbk */
 #endif
 
- // fixme
- //   ugly hack to work around missing api to specify the "type" of signals
+#ifdef KLU
+#include "ngspice/devdefs.h"
+#endif
+
+// fixme
+//   ugly hack to work around missing api to specify the "type" of signals
+
 extern int fixme_onoise_type;
 extern int fixme_inoise_type;
 
@@ -70,6 +75,14 @@ NOISEan(CKTcircuit* ckt, int restart)
     g_mif_info.circuit.anal_init = MIF_TRUE;
 
     /* gtri - end - wbk */
+#endif
+
+#ifdef KLU
+    if (ckt->CKTkluMODE) {
+        fprintf(stderr, "Error: Noise simulation is not (yet) supported with 'option KLU'.\n");
+        fprintf(stderr, "    Use 'option sparse' instead.\n");
+        return(E_UNSUPP);
+    }
 #endif
 
     NOISEAN* job = (NOISEAN*)ckt->CKTcurJob;
@@ -162,6 +175,7 @@ NOISEan(CKTcircuit* ckt, int restart)
             return(E_BADPARM);
         }
 
+
 #ifdef XSPICE
         /* gtri - begin - wbk - Call EVTop if event-driven instances exist */
 
@@ -176,6 +190,19 @@ NOISEan(CKTcircuit* ckt, int restart)
         }
         else
 #endif
+
+#ifdef KLU
+        if (ckt->CKTmatrix->CKTkluMODE)
+        {
+            /* Conversion from Complex Matrix to Real Matrix */
+            for (i = 0 ; i < DEVmaxnum ; i++)
+                if (DEVices [i] && DEVices [i]->DEVbindCSCComplexToReal && ckt->CKThead [i])
+                    DEVices [i]->DEVbindCSCComplexToReal (ckt->CKThead [i], ckt) ;
+
+            ckt->CKTmatrix->SMPkluMatrix->KLUmatrixIsComplex = KLUmatrixReal ;
+        }
+#endif
+
             /* If no event-driven instances, do what SPICE normally does */
             if (!ckt->CKTnoopac) { /* skip OP if option NOOPAC is set and circuit is linear */
                 error = CKTop(ckt,
@@ -225,7 +252,6 @@ NOISEan(CKTcircuit* ckt, int restart)
         }
         /* gtri - end - wbk */
 #endif
-
 
         /* Patch to noisean.c by Richard D. McRoberts. */
         ckt->CKTmode = (ckt->CKTmode & MODEUIC) | MODEDCOP | MODEINITSMSIG;
@@ -355,6 +381,21 @@ NOISEan(CKTcircuit* ckt, int restart)
     g_mif_info.circuit.anal_type = MIF_AC;
 
     /* gtri - end - wbk */
+#endif
+
+#ifdef KLU
+    if (ckt->CKTmatrix->CKTkluMODE)
+    {
+        /* Conversion from Real Matrix to Complex Matrix */
+        if (!ckt->CKTmatrix->SMPkluMatrix->KLUmatrixIsComplex)
+        {
+            for (i = 0 ; i < DEVmaxnum ; i++)
+                if (DEVices [i] && DEVices [i]->DEVbindCSCComplex && ckt->CKThead [i])
+                    DEVices [i]->DEVbindCSCComplex (ckt->CKThead [i], ckt) ;
+
+            ckt->CKTmatrix->SMPkluMatrix->KLUmatrixIsComplex = KLUMatrixComplex ;
+        }
+    }
 #endif
 
     /* do the noise analysis over all frequencies */

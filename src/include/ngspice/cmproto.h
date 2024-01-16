@@ -49,6 +49,7 @@ NON-STANDARD FEATURES
 #include  <stdio.h>
 #include "ngspice/cmtypes.h"
 #include "ngspice/cktdefs.h"
+#include "ngspice/cpextern.h"
 
 
 void cm_climit_fcn(double in, double in_offset, double cntl_upper, 
@@ -96,6 +97,7 @@ int cm_message_printf(const char *fmt, ...);
 double cm_netlist_get_c(void);
 double cm_netlist_get_l(void);
 
+void        cm_irreversible(unsigned int);
 const char *cm_get_node_name(const char *, unsigned int);
 bool        cm_probe_node(unsigned int, unsigned int, void *);
 bool        cm_schedule_output(unsigned int, unsigned int, double, void *);
@@ -124,5 +126,7 @@ void  free_pj(const void *ptr);
 FILE *fopen_with_path(const char *path, const char *mode);
 
 #define CM_IGNORE(x) (void) (x)
+
+void cm_cexit(const int);
 
 #endif /* include guard */

@@ -396,6 +396,7 @@ unsigned int main_id, ng_id, command_id;
 mutexType triggerMutex;
 mutexType allocMutex;
 mutexType fputsMutex;
+mutexType vecreallocMutex;
 #endif
 
 /* initialization status */
@@ -774,6 +775,8 @@ read_initialisation_file(const char *dir, const char *name)
 /* The functions exported explicitely from shared ngspice */
 /**********************************************************/
 
+
+
 #ifdef THREADS
 
 /* Checks if ngspice is running in the background */
@@ -857,16 +860,19 @@ ngSpice_Init(SendChar* printfcn, SendStat* statusfcn, ControlledExit* ngspiceexi
     pthread_mutex_init(&triggerMutex, NULL);
     pthread_mutex_init(&allocMutex, NULL);
     pthread_mutex_init(&fputsMutex, NULL);
+    pthread_mutex_init(&vecreallocMutex, NULL);
     cont_condition = FALSE;
 #else
 #ifdef SRW
     InitializeSRWLock(&triggerMutex);
     InitializeSRWLock(&allocMutex);
     InitializeSRWLock(&fputsMutex);
+    InitializeSRWLock(&vecreallocMutex);
 #else
     InitializeCriticalSection(&triggerMutex);
     InitializeCriticalSection(&allocMutex);
     InitializeCriticalSection(&fputsMutex);
+    InitializeCriticalSection(&vecreallocMutex);
 #endif
 #endif
     // Id of primary thread
@@ -1096,13 +1102,15 @@ int  ngSpice_Command(char* comexec)
     return 1;
 }
 
-#ifdef XSPICE
-/* Set the input path for files loaded by code models.
+/* Set the input path for files loaded by code models
+   like d_state, file_source, d_source.
+   Useful when netlist is sent by ngSpice_Circ and therefore
+   Infile_Path cannot be retrieved automatically.
    If NULL is sent, return the current Infile_Path. */
 IMPEXP
 char *ngCM_Input_Path(const char* path)
 {
-    /* delete existing command memory */
+    /* override existing path */
     if (path) {
         txfree(Infile_Path);
         Infile_Path = copy(path);
@@ -1110,7 +1118,6 @@ char *ngCM_Input_Path(const char* path)
     fprintf(stdout, "Note: Codel model file loading path is %s\n", Infile_Path);
     return Infile_Path;
 }
-#endif
 
 /* Return information about a vector to the caller */
 IMPEXP
@@ -1335,6 +1342,21 @@ char** ngSpice_AllEvtNodes(void)
     return EVTallnodes();
 }
 #endif
+
+/* Lock/unlock realloc of result vectors during plotting */
+IMPEXP
+int ngSpice_LockRealloc(void)
+{
+    mutex_lock(&vecreallocMutex);
+    return 1;
+}
+
+IMPEXP
+int ngSpice_UnlockRealloc(void)
+{
+    mutex_unlock(&vecreallocMutex);
+    return 1;
+}
 
 
 /* add the preliminary breakpoints to the list.
@@ -2306,7 +2328,7 @@ getisrcval(double time, char *iname)
     delmin    minimum delta CKTdelmin
     redostep  if 0, converged,
               if 1, either no convergence, need to redo with new ckt->CKTdelta
-              or ckt->CKTdelta has been reduced by tuncation errors too large.
+              or ckt->CKTdelta has been reduced by truncation errors too large.
     rejected  pointer to ckt->CKTstat->STATrejected, counts rejected time points.
     loc       location of function call in dctran.c: 0: after breakpoint handling, 1: at end of for loop
 */

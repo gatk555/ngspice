@@ -1469,21 +1469,18 @@ InterpFileAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
     if (run->refIndex != -1) {
         /*  Save first time step  */
         if (refValue->rValue == run->circuit->CKTinitTime) {
-            timeold = refValue->rValue;
             fileStartPoint(run->fp, run->binary, run->pointCount);
             fileAddRealValue(run->fp, run->binary, run->circuit->CKTinitTime);
             interpolatenow = nodata = FALSE;
         }
         /*  Save last time step  */
         else if (refValue->rValue == run->circuit->CKTfinalTime) {
-            timeold = refValue->rValue;
             fileStartPoint(run->fp, run->binary, run->pointCount);
             fileAddRealValue(run->fp, run->binary, run->circuit->CKTfinalTime);
             interpolatenow = nodata = FALSE;
         }
         /*  Save exact point  */
         else if (refValue->rValue == timestep) {
-            timeold = refValue->rValue;
             fileStartPoint(run->fp, run->binary, run->pointCount);
             fileAddRealValue(run->fp, run->binary, timestep);
             timestep += run->circuit->CKTstep;
@@ -1501,7 +1498,6 @@ InterpFileAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
         else {
             /* Do not save this step */
             run->pointCount--;
-            timeold = refValue->rValue;
             nodata = TRUE;
             interpolatenow = FALSE;
         }
@@ -1585,7 +1581,7 @@ InterpFileAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
 #endif
 
     }
-
+    timeold = refValue->rValue;
     fileEndPoint(run->fp, run->binary);
 
     /*  Check that the write to disk completed successfully, otherwise abort  */
@@ -1632,19 +1628,16 @@ InterpPlotAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
 
     /*  Save first time step  */
     if (refValue->rValue == run->circuit->CKTinitTime) {
-        timeold = refValue->rValue;
         plotAddRealValue(&run->data[iscale], refValue->rValue);
         interpolatenow = nodata = FALSE;
     }
     /*  Save last time step  */
     else if (refValue->rValue == run->circuit->CKTfinalTime) {
-        timeold = refValue->rValue;
         plotAddRealValue(&run->data[iscale], run->circuit->CKTfinalTime);
         interpolatenow = nodata = FALSE;
     }
     /*  Save exact point  */
     else if (refValue->rValue == timestep) {
-        timeold = refValue->rValue;
         plotAddRealValue(&run->data[iscale], timestep);
         timestep += run->circuit->CKTstep;
         interpolatenow = nodata = FALSE;
@@ -1660,7 +1653,6 @@ InterpPlotAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
     else {
         /* Do not save this step */
         run->pointCount--;
-        timeold = refValue->rValue;
         nodata = TRUE;
         interpolatenow = FALSE;
     }
@@ -1740,7 +1732,7 @@ InterpPlotAdd(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
 #endif
 
     }
-
+    timeold = refValue->rValue;
     gr_iplot(run->runPlot);
 
     if (ft_bpcheck(run->runPlot, run->pointCount) == FALSE)

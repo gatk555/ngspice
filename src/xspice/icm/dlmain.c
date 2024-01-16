@@ -340,6 +340,11 @@ double cm_netlist_get_l(void) {
 	return (coreitf->dllitf_cm_netlist_get_l)();
 }
 
+void  cm_irreversible(unsigned int place)
+{
+	(coreitf->dllitf_cm_irreversible)(place);
+}
+
 const char *cm_get_node_name(const char *port, unsigned int index) {
     return coreitf->dllitf_cm_get_node_name(port, index);
 }
@@ -430,6 +435,23 @@ void txfree(const void *ptr) {
 	(coreitf->dllitf_txfree)(ptr);
 }
 
+void cm_cexit(const int exitcode) {
+	(coreitf->dllitf_cexit)(exitcode);
+}
+
+#ifdef KLU
+int MIFbindCSC (GENmodel *inModel, CKTcircuit *ckt) {
+    return (coreitf->dllitf_MIFbindCSC) (inModel, ckt) ;
+}
+
+int MIFbindCSCComplex (GENmodel *inModel, CKTcircuit *ckt) {
+    return (coreitf->dllitf_MIFbindCSCComplex) (inModel, ckt) ;
+}
+
+int MIFbindCSCComplexToReal (GENmodel *inModel, CKTcircuit *ckt) {
+    return (coreitf->dllitf_MIFbindCSCComplexToReal) (inModel, ckt) ;
+}
+#endif
 
 /*
 fopen_with_path()
@@ -445,7 +467,7 @@ FILE *fopen_with_path(const char *path, const char *mode)
 {
     FILE *fp;
 
-    if((path[0] != '/') && (path[1] != ':')) { /* path absolue (probably) */
+    if((path[0] != '/') && (path[1] != ':')) { /* path is (probably) not absolute */
 //        const char *x = getenv("ngspice_vpath");
         const char *x = cm_get_path();
         if (x) {

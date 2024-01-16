@@ -6,6 +6,7 @@
 #ifndef ngspice_DLLITF_H
 #define ngspice_DLLITF_H
 
+#include "ngspice/config.h"
 #include "ngspice/mifproto.h"
 #include "ngspice/cmproto.h"
 
@@ -58,6 +59,7 @@ struct coreInfo_t {
 	int       ((*dllitf_cm_message_send)(char *));
 	double    ((*dllitf_cm_netlist_get_c)(void));
 	double    ((*dllitf_cm_netlist_get_l)(void));
+        void      ((*dllitf_cm_irreversible)(unsigned int));
     const char *  ((*dllitf_cm_get_node_name)(const char *, unsigned int));
     bool          ((*dllitf_cm_probe_node)(unsigned int, unsigned int,
                                            void *));
@@ -82,6 +84,13 @@ struct coreInfo_t {
 	void *    ((*dllitf_tmalloc)(size_t));
 	void *    ((*dllitf_trealloc)(const void *, size_t));
 	void      ((*dllitf_txfree)(const void *));
+	void      ((*dllitf_cexit)(const int));
+
+#ifdef KLU
+        int ((*dllitf_MIFbindCSC) (GENmodel *, CKTcircuit *)) ;
+        int ((*dllitf_MIFbindCSCComplex) (GENmodel *, CKTcircuit *)) ;
+        int ((*dllitf_MIFbindCSCComplexToReal) (GENmodel *, CKTcircuit *)) ;
+#endif
 };
 
 #endif

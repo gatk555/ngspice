@@ -15,7 +15,7 @@
 #define PACKAGE "ngspice"
 
 /* Version number of package */
-#define VERSION "41"
+#define VERSION "42"
 
 /* Define the directory for executables */
 #define NGSPICEBINDIR "../bin"
@@ -458,6 +458,9 @@
 
 /* Client-Server via socket. */
 /* #undef IPC_UNIX_SOCKETS */
+
+/* Define if we want KLU linear systems solver */
+#define KLU /**/
 
 /* The NDEV interface */
 /* #undef NDEV */

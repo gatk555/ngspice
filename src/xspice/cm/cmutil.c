@@ -36,7 +36,7 @@ INTERFACES
     cm_complex_subtract()
     cm_complex_multiply()
     cm_complex_divide()
-    
+    cm_cexit()
 
 REFERENCED FILES
 
@@ -51,7 +51,7 @@ NON-STANDARD FEATURES
 #include <stdio.h>
 #include <math.h>
 #include "ngspice/cm.h"
- 
+
 /* Corner Smoothing Function ************************************
 *                                                               *
 * The following function smooths the transition between two     *
@@ -525,4 +525,7 @@ Complex_t cm_complex_divide(Complex_t x, Complex_t y)
     return(c);
 }
 
-
+void cm_cexit(const int exitcode)
+{
+    controlled_exit(exitcode);
+}

@@ -33,7 +33,6 @@ typedef struct sVCVSinstance {
     const int VCVScontNegNode;    /* number of negative node of controlling source */
     int VCVSbranch; /* equation number of branch equation added for v source */
 
-    double VCVSinitCond;    /* initial condition (of controlling source) */
     double VCVScoeff;   /* coefficient */
 
     double *VCVSposIbrPtr;  /* pointer to sparse matrix element at 
@@ -52,6 +51,15 @@ typedef struct sVCVSinstance {
 
     int  VCVSsenParmNo;   /* parameter # for sensitivity use;
             set equal to  0 if not a design parameter*/
+
+#ifdef KLU
+    BindElement *VCVSposIbrBinding ;
+    BindElement *VCVSnegIbrBinding ;
+    BindElement *VCVSibrNegBinding ;
+    BindElement *VCVSibrPosBinding ;
+    BindElement *VCVSibrContPosBinding ;
+    BindElement *VCVSibrContNegBinding ;
+#endif
 
 } VCVSinstance ;
 
