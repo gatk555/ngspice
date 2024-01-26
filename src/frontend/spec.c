@@ -122,15 +122,10 @@ com_spec(wordlist *wl)
                 if (maxt-time[i] > span) {
                     win[i] = 0;
                 } else {
-                    win[i] = 1 - 2 * fabs((time[i]-maxt)-span/2) / span;
+                    win[i] = 2 - fabs(2+4*(time[i]-maxt)/span);
                 }
             }
         else if (eq(window, "blackman")) {
-            int order;
-            if (!cp_getvar("specwindoworder", CP_NUM, &order, 0))
-                order = 2;
-            if (order < 2)      /* only order 2 supported here */
-                order = 2;
             for (i = 0; i < tlen; i++) {
                 if (maxt-time[i] > span) {
                     win[i] = 0;
