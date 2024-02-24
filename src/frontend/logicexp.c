@@ -729,7 +729,7 @@ static char *makestr(int c)
 static int infix_to_postfix(char* infix, DSTRING * postfix_p)
 {
     struct Stack stack;
-    int ltok;
+    int ltok, last_tok = -1;
     LEXER lx;
     NAME_ENTRY nlist = NULL, entry = NULL;
     int status = 0;
@@ -739,6 +739,18 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
     nlist = add_name_entry("first", NULL);
     ds_clear(postfix_p);
     while ( ( ltok = lexer_scan(lx) ) != 0 ) { // start while ltok loop
+        if (ltok == LEX_ID && last_tok == LEX_ID) {
+            fprintf(stderr, "ERROR no gate operator between two identifiers\n");
+            status = 1;
+            goto err_return;
+        }
+        if (lex_gate_op(ltok) && lex_gate_op(last_tok)) {
+            fprintf(stderr, "ERROR two consecutive gate operators\n");
+            status = 1;
+            goto err_return;
+        }
+
+        last_tok = ltok;
         if (ltok == LEX_ID) {
             ds_cat_printf(postfix_p, " %s", lx->lexer_buf);
         } else if (ltok == '(') {
@@ -769,6 +781,11 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
             }
             entry = add_name_entry(tokstr, nlist);
             if (push(&stack, entry->name)) goto err_return;
+        } else {
+            fprintf(stderr, "ERROR unexpected infix token %d \'%s\'\n",
+                ltok, lx->lexer_buf);
+            status = 1;
+            goto err_return;
         }
     } // end while ltok loop
     while (stack.top != -1) {
@@ -875,59 +892,6 @@ err_return:
 
 /* End of infix to posfix */
 
-/* Start parse table */
-typedef struct table_line *TLINE;
-struct table_line {
-    char *line;
-    int depth;  /* expression nesting depth, outermost depth == 1 */
-    TLINE next;
-};
-
-typedef struct parse_table *PTABLE;
-struct parse_table {
-    TLINE first;
-    TLINE last;
-    unsigned int entry_count;
-};
-
-static PTABLE parse_tab = NULL;
-
-static PTABLE new_parse_table(void)
-{
-    PTABLE pt;
-    pt = TMALLOC(struct parse_table, 1);
-    pt->first = pt->last = NULL;
-    pt->entry_count = 0;
-    return pt;
-}
-
-static void delete_parse_table(PTABLE pt)
-{
-    TLINE t, next;
-    if (!pt)
-        return;
-    next = pt->first;
-    while (next) {
-        t = next;
-        tfree(t->line);
-        next = t->next;
-        tfree(t);
-    }
-    tfree(pt);
-}
-
-static void delete_parse_tables(void)
-{
-    delete_parse_table(parse_tab);
-    parse_tab = NULL;
-}
-
-static void init_parse_tables(void)
-{
-    parse_tab = new_parse_table();
-}
-/* End parse table */
-
 /* Start of logicexp parser */
 static void aerror(char *s);
 static BOOL amatch(int t);
@@ -941,7 +905,6 @@ static void cleanup_parser(void)
 {
     delete_lexer(parse_lexer);
     parse_lexer = NULL;
-    delete_parse_tables();
 }
 
 static char *get_inst_name(void)
@@ -1049,9 +1012,21 @@ static BOOL bstmt_postfix(void)
         retval = FALSE;
         goto bail_out;
     }
+    if (lookahead != '{') {
+        printf("ERROR in bstmt_postfix \'{\' was expected\n");
+        aerror("bstmt_postfix: syntax error");
+        retval = FALSE;
+        goto bail_out;
+    }
 
     rest = parse_lexer->lexer_line + parse_lexer->lexer_pos;
     right_bracket = strstr(rest, "}");
+    if (!right_bracket) {
+        printf("ERROR in bstmt_postfix \'}\' was not found\n");
+        aerror("bstmt_postfix: syntax error");
+        retval = FALSE;
+        goto bail_out;
+    }
     ds_clear(&infix);
     ds_cat_mem(&infix, rest, right_bracket - rest);
     if (infix_to_postfix(ds_get_buf(&infix), &postfix)) {
@@ -1118,7 +1093,6 @@ static BOOL bparse(char *line, BOOL new_lexer)
     lookahead = lex_scan(); // ':'
     lookahead = lex_scan();
     while (lookahead != '\0') {
-        init_parse_tables();
         ds_clear(&stmt);
         ds_cat_str(&stmt, parse_lexer->lexer_buf);
         if (!bstmt_postfix()) {
