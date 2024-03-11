@@ -1,4 +1,4 @@
-This repository contains a copy of the main development branch (pre-master-42)
+This repository contains a copy of the main development branch
 of Ngspice (https://ngspice.sourceforge.io/) and scripts for Github Actions
 that run daily to update the copy and build it.  The resulting binaries
 can be found under the "Actions" tab above.  (Look for "artifacts".)
@@ -14,9 +14,9 @@ and for a Macintosh also:
 	xattr -d com.apple.quarantine bin/ngspice
 	xattr -d com.apple.quarantine lib/ngspice/*
 
-The packaged files are targeted at /usr/local but may be installed anywhere
-and ngspice will work correctly if environment variable SPICE_ROOT
-is set to that location.
+The packaged files are intended for installation in /usr/local.
+A file, /usr/local/README.ngspice, identifies the latest revision that
+was included in the build.
 
 This branch is for Github Actions workflow files only, the ngspice source
 is on branch gh_pm42.  There are currently two local changes to the source:
