@@ -353,10 +353,14 @@ static int lexer_scan(LEXER lx)
             return c;
         else if (lex_ident(c)) {
             size_t i = 0;
+            BOOL need_gt1 = FALSE;
             if (c == '+') { // an identifier does not begin with '+'
                 lx->lexer_buf[0] = (char) c;
                 lx->lexer_buf[1] = '\0';
                 return LEX_OTHER;
+            } else if (c == '_' || c == '/' || c == '-') {
+                // these need to be followed by at least one more ident
+                need_gt1 = TRUE;
             }
             while (lex_ident(c)) {
                 if (i >= lx->lexer_blen) {
@@ -367,6 +371,10 @@ static int lexer_scan(LEXER lx)
                 lx->lexer_buf[i] = (char) c;
                 i++;
                 c = lexer_getchar(lx);
+            }
+            if (i == 1 && need_gt1) {
+                lx->lexer_buf[1] = '\0';
+                return LEX_OTHER;
             }
             if (i >= lx->lexer_blen) {
                 lx->lexer_blen *= 2;
@@ -733,19 +741,37 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
     LEXER lx;
     NAME_ENTRY nlist = NULL, entry = NULL;
     int status = 0;
+    int lparen_count = 0, rparen_count = 0;
 
     lx = new_lexer(infix);
     stack.top = -1;
     nlist = add_name_entry("first", NULL);
     ds_clear(postfix_p);
     while ( ( ltok = lexer_scan(lx) ) != 0 ) { // start while ltok loop
+        if (ltok == '(') { lparen_count++; }
+        if (ltok == ')') { rparen_count++; }
         if (ltok == LEX_ID && last_tok == LEX_ID) {
-            fprintf(stderr, "ERROR no gate operator between two identifiers\n");
+            fprintf(stderr, "ERROR (1) no gate operator between two identifiers\n");
             status = 1;
             goto err_return;
         }
         if (lex_gate_op(ltok) && lex_gate_op(last_tok)) {
-            fprintf(stderr, "ERROR two consecutive gate operators\n");
+            fprintf(stderr, "ERROR (2) two consecutive gate operators\n");
+            status = 1;
+            goto err_return;
+        }
+        if (last_tok == '~' && ltok != LEX_ID && ltok != '(') {
+            fprintf(stderr, "ERROR (3) \'~\' is not followed by an ID or lparen\n");
+            status = 1;
+            goto err_return;
+        }
+        if (ltok == '~' && (last_tok == LEX_ID || last_tok == ')')) {
+            fprintf(stderr, "ERROR (4) \'~\' follows an ID or rparen\n");
+            status = 1;
+            goto err_return;
+        }
+        if (ltok == ')' && (lex_gate_op(last_tok) || last_tok == '~')) {
+            fprintf(stderr, "ERROR (5) incomplete infix sub-expression\n");
             status = 1;
             goto err_return;
         }
@@ -753,6 +779,11 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
         last_tok = ltok;
         if (ltok == LEX_ID) {
             ds_cat_printf(postfix_p, " %s", lx->lexer_buf);
+            if (strncmp(lx->lexer_buf, TMP_PREFIX, TMP_LEN) == 0) {
+                printf("WARNING potential name collision %s in logicexp\n",
+                    lx->lexer_buf);
+                fflush(stdout);
+            }
         } else if (ltok == '(') {
             entry = add_name_entry(makestr(ltok), nlist);
             if (push(&stack, entry->name)) goto err_return;
@@ -770,6 +801,7 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
                 next_tok = lexer_scan(lx);
                 if (next_tok == LEX_ID) {
                     ds_cat_printf(postfix_p, " tilde_%s", lx->lexer_buf);
+                    last_tok = next_tok;
                     continue;  // while ltok loop
                 } else {
                     lexer_back_one(lx);
@@ -782,12 +814,22 @@ static int infix_to_postfix(char* infix, DSTRING * postfix_p)
             entry = add_name_entry(tokstr, nlist);
             if (push(&stack, entry->name)) goto err_return;
         } else {
-            fprintf(stderr, "ERROR unexpected infix token %d \'%s\'\n",
+            fprintf(stderr, "ERROR (6) unexpected infix token %d \'%s\'\n",
                 ltok, lx->lexer_buf);
             status = 1;
             goto err_return;
         }
     } // end while ltok loop
+    if (lex_gate_op(last_tok) || last_tok == '~') {
+        fprintf(stderr, "ERROR (7) incomplete infix expression\n");
+        status = 1;
+        goto err_return;
+    }
+    if (lparen_count != rparen_count) {
+        fprintf(stderr, "ERROR (8) mismatched parentheses\n");
+        status = 1;
+        goto err_return;
+    }
     while (stack.top != -1) {
         ds_cat_printf(postfix_p, " %s", pop(&stack, &status));
         if (status) goto err_return;
@@ -870,8 +912,8 @@ static int evaluate_postfix(char* postfix)
     if (prevtok == LEX_ID) {
         char *n1 = NULL;
         DS_CREATE(ds1, 32);
-        count++;
         sprintf(tmp, "%s%d", TMP_PREFIX, count);
+        count++;
         n1 = tilde_tail(pop(&stack, &status), &ds1);
         if (status) goto err_return;
         if (!skip && n1[0] == '~') {
@@ -1002,6 +1044,11 @@ static BOOL bstmt_postfix(void)
     if (lookahead == LEX_ID) {
         ds_clear(&lhs);
         ds_cat_str(&lhs, parse_lexer->lexer_buf);
+        if (strncmp(ds_get_buf(&lhs), TMP_PREFIX, TMP_LEN) == 0) {
+            printf("WARNING potential name collision %s in logicexp\n",
+                ds_get_buf(&lhs));
+            fflush(stdout);
+        }
         lookahead = lex_scan();
     } else {
         aerror("bstmt_postfix: syntax error");
@@ -1476,6 +1523,7 @@ static char *get_typ_estimate(char *min, char *typ, char *max, DSTRING *pds)
             if (!eq(unitsmin, unitsmax)) {
                 printf("WARNING typ_estimate units do not match"
                        " min %s max %s", tmpmin, tmpmax);
+                fflush(stdout);
                 if (unitsmin[0] == unitsmax[0]) {
                     average = (valmin + valmax) / (float)2.0;
                     ds_cat_printf(pds, "%.2f%cs", average, unitsmin[0]);
@@ -1676,6 +1724,7 @@ static BOOL extract_delay(
                             }
                         } else {
                             printf("WARNING pindly DELAY not found\n");
+                            fflush(stdout);
                             if (tri) {
                                 ds_cat_printf(&delay_string,
                                     "(inertial_delay=true delay=10ns)");
