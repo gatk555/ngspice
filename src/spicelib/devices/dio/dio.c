@@ -84,6 +84,8 @@ IFparm DIOmPTable[] = { /* model parameters */
  IOP( "tlev", DIO_MOD_TLEV, IF_INTEGER, "Diode temperature equation selector"),
  IOP( "tlevc", DIO_MOD_TLEVC, IF_INTEGER, "Diode temperature equation selector"),
  IOP( "eg",  DIO_MOD_EG,  IF_REAL, "Activation energy"),
+ IOP( "gap1", DIO_MOD_GAP1, IF_REAL, "First bandgap correction factor"),
+ IOP( "gap2", DIO_MOD_GAP2, IF_REAL, "Second bandgap correction factor"),
  IOP( "xti", DIO_MOD_XTI, IF_REAL, "Saturation current temperature exp."),
  IOP( "cta", DIO_MOD_CTA, IF_REAL, "Area junction temperature coefficient"),
  IOPR( "ctc", DIO_MOD_CTA, IF_REAL, "Area junction capacitance temperature coefficient"),
@@ -133,6 +135,7 @@ IFparm DIOmPTable[] = { /* model parameters */
  IOP( "xoi", DIO_MOD_XOI, IF_REAL, "Thickness of the polysilicon to bulk oxide (level=3)"),
  IOP( "xm",  DIO_MOD_XM,  IF_REAL, "Masking and etching effects in metal (level=3)"),
  IOP( "xp",  DIO_MOD_XP,  IF_REAL, "Masking and etching effects in polysilicon (level=3)"),
+ IOP( "xw",  DIO_MOD_XW,  IF_REAL, "Masking and etching effects (level=3)"),
 
  IP( "d",    DIO_MOD_D,   IF_FLAG, "Diode model")
 };
