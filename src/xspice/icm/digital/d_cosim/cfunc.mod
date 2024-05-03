@@ -39,7 +39,7 @@ char *dlerror(void) // Lifted from dev.c.
     if (rc == 0) { /* FormatMessage failed */
         (void) sprintf(errstr, errstr_fmt, (unsigned long) GetLastError());
     } else {
-        snprintf(errstr, sizeof errstr, errstr_fmt, lpMsgBuf);
+        snprintf(errstr, sizeof errstr, "%s", lpMsgBuf);
         LocalFree(lpMsgBuf);
     }
     return errstr;
@@ -77,6 +77,7 @@ struct instance {
     unsigned int    inout_ports; // Number of XSPICE inout ports.
     unsigned int    op_pending;  // Output is pending.
     Digital_t      *out_vals;    // The new output values.
+    double          last_step;   // Time of previous accepted step.
     double          extra;       // Margin to extend timestep.
     void           *so_handle;   // dlopen() handle to the simulation binary.
 };
@@ -93,6 +94,10 @@ static void callback(ARGS, Mif_Callback_Reason_t reason)
             return;
         if (ip->info.cleanup)
             (*ip->info.cleanup)(&ip->info);
+        if (ip->info.lib_argv)
+            free((void *)ip->info.lib_argv);
+        if (ip->info.sim_argv)
+            free((void *)ip->info.sim_argv);
         if (ip->so_handle)
             dlclose(ip->so_handle);
         if (ip->q)
@@ -147,7 +152,7 @@ static void output(struct instance *ip, ARGS)
     delay = PARAM(delay) - (TIME - ip->info.vtime);
     if (delay <= 0) {
         cm_message_printf("WARNING: output scheduled with impossible "
-                          "delay (%g) at %g.", delay, TIME);
+                          "delay (%g) at %g/%g.", delay, TIME, ip->info.vtime);
         delay = 1e-12;
     }
     out_vals = (Digital_t *)cm_event_get_ptr(1, 0);
@@ -213,6 +218,7 @@ static int advance(struct instance *ip, ARGS)
             cm_event_queue((TIME + ip->info.vtime + PARAM(delay)) / 2.0);
 #endif
         } else {
+            double when, delta;
 
             /* Something changed that may alter the future of the
              * SPICE simulation.  Truncate the current timestep so that
@@ -220,8 +226,32 @@ static int advance(struct instance *ip, ARGS)
              * in the past.
              */
 
-            DBG("Truncating timestep to %.16g", ip->info.vtime + ip->extra);
-            cm_analog_set_temp_bkpt(ip->info.vtime + ip->extra);
+            when = ip->info.vtime + ip->extra;
+            DBG("Truncating timestep from %.16g to %.16g", TIME, when);
+	    if (cm_analog_set_temp_bkpt(when)) {
+                /* Failed to set breakpoint, as it was probably too early.
+                 * This could happen if a "Normal" simulation behaves like
+                 * an "After_input" simulation is expected to do, and produces
+                 * output immediately on input, and uses its own time.
+		 * Try and recover: this may lead to a warning on output.
+                 */
+
+                DBG("Attempting recovery from failed timestep truncation: %s "
+                    "%.16g->%.16g",
+                    cm_message_get_errmsg(), TIME, when);
+                delta = (TIME - ip->info.vtime) / 1000;
+                when = ip->info.vtime;
+		if (when < ip->last_step) {
+                    cm_message_printf("WARNING: client simulator requested "
+                                      "output in the past: %.16g < %.16g",
+                                      when, ip->last_step);
+                    when = ip->last_step - delta;
+                }
+
+		do {
+                    when += delta;
+                } while (cm_analog_set_temp_bkpt(when));
+            }
 
             /* Any remaining input events are in an alternate future. */
 
@@ -243,10 +273,11 @@ static void run(struct instance *ip, ARGS)
     if (ip->q_index < 0) {
         /* No queued input, advance to current TIME. */
 
-        DBG("Advancing vtime without input %.16g -> %.16g",
-            ip->info.vtime , TIME);
+        DBG("Advancing vtime by %g without input %.16g -> %.16g",
+            TIME - ip->info.vtime, ip->info.vtime, TIME);
         ip->info.vtime = TIME;
-        advance(ip, XSPICE_ARG);
+        if (!advance(ip, XSPICE_ARG))
+	   ip->last_step = ip->info.vtime;
         return;
     }
 
@@ -272,7 +303,8 @@ static void run(struct instance *ip, ARGS)
         /* Step the simulation forward to the input event time. */
 
         ip->info.vtime = rp->when;
-        if (ip->info.method == Normal && advance(ip, XSPICE_ARG)) {
+        if ((ip->info.method == Normal || ip->info.method == Both) &&
+            advance(ip, XSPICE_ARG)) {
             ip->q_index = -1;
             return;
         }
@@ -290,7 +322,8 @@ static void run(struct instance *ip, ARGS)
 
         /* Simulator requested to run after input change. */
 
-        if (ip->info.method == After_input && advance(ip, XSPICE_ARG)) {
+        if ((ip->info.method == After_input || ip->info.method == Both) &&
+            advance(ip, XSPICE_ARG)) {
             ip->q_index = -1;
             return;
         }
@@ -301,8 +334,10 @@ static void run(struct instance *ip, ARGS)
     ip->q_index = -1;
     if (ip->info.method == Normal && TIME > ip->info.vtime) {
         ip->info.vtime = TIME;
-        advance(ip, XSPICE_ARG);
+        if (advance(ip, XSPICE_ARG))
+	   return;
     }
+    ip->last_step = ip->info.vtime;
 }
 
 /* Check whether an input value has changed.
@@ -374,7 +409,7 @@ void ucm_d_cosim(ARGS)
         /* Load the shared library containing the co-simulator. */
 
         fn = PARAM(simulation);
-        handle = dlopen(fn, RTLD_LAZY | RTLD_LOCAL);
+        handle = dlopen(fn, RTLD_GLOBAL | RTLD_NOW);
         if (!handle) {
             cm_message_send("Failed to load simulation binary. "
                             "Try setting LD_LIBRARY_PATH.");
@@ -399,7 +434,39 @@ void ucm_d_cosim(ARGS)
         ip->info.out_fn = accept_output;
         CALLBACK = callback;
 
-        /* Store the simulation interface information. */
+	if (PARAM_NULL(lib_args)) {
+            ip->info.lib_argc = 0;
+            *(void **)&ip->info.lib_argv = NULL;
+        } else {
+            char **args;
+
+            ip->info.lib_argc = PARAM_SIZE(lib_args);
+            args = malloc((ip->info.lib_argc + 1) * sizeof (char *));
+            if (args) {
+                for (i = 0; i < ip->info.lib_argc; ++i)
+                    args[i] = PARAM(lib_args[i]);
+                args[i] = NULL;
+            }
+            *(char ***)&ip->info.lib_argv = args;
+        }
+
+	if (PARAM_NULL(sim_args)) {
+            ip->info.sim_argc = 0;
+            *(void **)&ip->info.sim_argv = NULL;
+        } else {
+            char **args;
+
+            ip->info.sim_argc = PARAM_SIZE(sim_args);
+            args = malloc((ip->info.sim_argc + 1) * sizeof (char *));
+            if (args) {
+                for (i = 0; i < ip->info.sim_argc; ++i)
+                    args[i] = PARAM(sim_args[i]);
+                args[i] = NULL;
+            }
+            *(char ***)&ip->info.sim_argv = args;
+        }
+
+        /* Get the simulation interface information. */
 
         (*ifp)(&ip->info);
 
@@ -569,11 +636,21 @@ void ucm_d_cosim(ARGS)
          * forward, replaying any saved input events.
          */
 
-        if (TIME <= ip->info.vtime)
+        if (ip->last_step == 0.0) {
+            /* First step.  "Step" the co-simulation to time zero,
+             * as that may trigger initialisations.
+             */
+
+            if (advance(ip, XSPICE_ARG))
+                return;
+        }
+
+        if (TIME <= ip->info.vtime) {
             cm_message_printf("XSPICE time is behind vtime:\n"
                               "XSPICE %.16g\n"
                               "Cosim  %.16g",
                               TIME, ip->info.vtime);
+        }
         run(ip, XSPICE_ARG);
     }
 }
