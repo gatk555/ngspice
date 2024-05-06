@@ -6,13 +6,13 @@ jobs:
   build-macos-x86_64:
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: gh_pm43
       - name: Install Dependencies
         run: |
           brew install make automake bison
-          brew install ncurses readline libxaw
+          brew install ncurses readline libxaw libomp
           # compile_macos_gcc.sh expects this path.  Kludge it.
           sudo mkdir -p /opt/X11/include
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
@@ -39,7 +39,7 @@ jobs:
           echo >> build/README.ngspice
           git log -1 --skip=1 >> build/README.ngspice
       - name: Save X86_64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Ngspice pre-master-43, Macos X86_64
           path: build
@@ -52,12 +52,12 @@ jobs:
   build-macos-arm64:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: gh_pm43
       - name: Install Dependencies
         run: |
-          brew install automake bison
+          brew install automake bison libomp
           brew uninstall --ignore-dependencies ncurses readline
           for i in libxaw ncurses readline ; do
             brew fetch --force --bottle-tag=arm64_monterey $i
@@ -90,7 +90,7 @@ jobs:
           echo >> build/README.ngspice
           git log -1 --skip=1 >> build/README.ngspice
       - name: Save arm64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Ngspice pre-master-43, Macos arm64
           path: build
