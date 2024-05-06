@@ -989,10 +989,12 @@ AM_CONDITIONAL([RELPATH], [test "x$enable_relpath" = xyes])
 if test "x$enable_relpath" = xyes; then
     AC_DEFINE_UNQUOTED([NGSPICEBINDIR], ["`echo ../bin`"], [Define the directory for executables])
     AC_DEFINE_UNQUOTED([NGSPICEDATADIR], ["`echo ../share/ngspice`"], [Define the directory for architecture independent data files])
+    AC_DEFINE_UNQUOTED([NGSPICELIBDIR], ["`echo ../lib/ngspice`"], [Define the directory for architecture-dependent libraries])
     AC_DEFINE([HAS_RELPATH], [1], [rel. path of libraries and scripts])
 else
 AC_DEFINE_UNQUOTED([NGSPICEBINDIR], ["`echo $dprefix/bin`"], [Define the directory for executables])
 AC_DEFINE_UNQUOTED([NGSPICEDATADIR], ["`echo $dprefix/share/ngspice`"], [Define the directory for architecture independent data files])
+AC_DEFINE_UNQUOTED([NGSPICELIBDIR], ["`echo $dprefix/lib/ngspice`"], [Define the directory for architecture-dependent libraries])
 fi
 
 # Create timestamp, may be overruled by setting env var SOURCE_DATE_EPOCH
@@ -1278,7 +1280,7 @@ else
             do
                 if test "x$with_tcl" = x  ||  test "x$with_tcl" = xno ; then
                     AC_MSG_RESULT([Checking for readline:])
-                    AC_CHECK_HEADERS([$dir/include/readline/readline.h $dir/include/readline/history.h],
+                    AC_CHECK_HEADERS($dir/include/readline/readline.h $dir/include/readline/history.h,
                         [AC_DEFINE([HAVE_GNUREADLINE], [], [Define if we have GNU readline])],
                         [AC_MSG_ERROR([Couldn't find GNU readline headers.])])
                     AC_SEARCH_LIBS([tputs], [ncurses tinfo termcap],
@@ -1436,6 +1438,7 @@ AC_CONFIG_FILES([Makefile
                  src/xspice/enh/Makefile
                  src/xspice/ipc/Makefile
                  src/xspice/idn/Makefile
+                 src/xspice/verilog/Makefile
                  src/osdi/Makefile
                  tests/Makefile
                  tests/bsim1/Makefile
