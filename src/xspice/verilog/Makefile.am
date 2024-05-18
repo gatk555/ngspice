@@ -32,8 +32,8 @@ x_ivlngvpi_la_LDFLAGS = -module -shared  -version-number 0
 
 install-exec-hook:
 	cd $(DESTDIR)$(pkglibdir); \
-	mv x_ivlng.so.0.0.0 ivlng.so; \
-	mv x_ivlngvpi.so.0.0.0 ivlng.vpi; \
+	cp x_ivlng.so ivlng.so; \
+	cp x_ivlngvpi.so ivlng.vpi; \
 	rm x_ivlng*
 
 uninstall-hook:
