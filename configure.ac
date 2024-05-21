@@ -409,12 +409,15 @@ fi
 
 ####
 ### check for operating system at compile time
+AM_CONDITIONAL([DLIBS_FULLY_RESOLVED], false)
 case $host_os in
 	*mingw* | *msys* )
 		AC_DEFINE([OS_COMPILED], [1], [MINGW for MS Windows])
+		AM_CONDITIONAL([DLIBS_FULLY_RESOLVED], true)
 		;;
 	*cygwin* )
 		AC_DEFINE([OS_COMPILED], [2], [Cygwin for MS Windows])
+		AM_CONDITIONAL([DLIBS_FULLY_RESOLVED], true)
 		;;
 	*freebsd* )
 		AC_DEFINE([OS_COMPILED], [3], [FreeBSD])

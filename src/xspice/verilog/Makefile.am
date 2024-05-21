@@ -27,6 +27,11 @@ x_ivlngvpi_la_SOURCES = vpi.c icarus_shim.h vpi_user.fake
 x_ivlngvpi_la_CFLAGS = -I../../../../src/include
 x_ivlngvpi_la_LDFLAGS = -module -shared  -version-number 0
 
+if DLIBS_FULLY_RESOLVED
+x_ivlng_la_LDFLAGS += --no-undefined
+x_ivlngvpi_la_LDFLAGS += --no-undefined -L. -lvvp
+endif
+
 # Libtool makes and installs static libraries and symbolic links.
 # Rename and tidy after installation.
 
