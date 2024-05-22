@@ -35,7 +35,7 @@ AC_CONFIG_HEADERS([src/include/ngspice/config.h])
 
 # Initialize automake stuff
 AM_INIT_AUTOMAKE([-Wall -Werror nostdinc serial-tests])
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+#m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 ext_CFLAGS="${CFLAGS+yes}"
 
@@ -430,6 +430,7 @@ case $host_os in
 		;;
 	*linux* )
 		AC_DEFINE([OS_COMPILED], [6], [Linux])
+		AM_CONDITIONAL([DLIBS_FULLY_RESOLVED], true)
 		;;
 	*darwin* )
 		AC_DEFINE([OS_COMPILED], [7], [macOS])
