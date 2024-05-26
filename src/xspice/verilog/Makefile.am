@@ -29,7 +29,7 @@ x_ivlngvpi_la_LDFLAGS = -module -shared  -version-number 0
 
 if DLIBS_FULLY_RESOLVED
 x_ivlng_la_LDFLAGS += -no-undefined
-x_ivlngvpi_la_LDFLAGS += -no-undefined -lvvp x_ivlng-0.dll
+x_ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -l:x_ivlng-0.dll
 endif
 
 # Libtool makes and installs static libraries and symbolic links.
