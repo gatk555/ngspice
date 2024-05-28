@@ -1942,9 +1942,99 @@ char *inp_pathresolve(const char *name)
 } /* end of function inp_pathresolve */
 
 
-
+/* Figure out if name starts with: environmental variables (replace them),
+   ~/ (expand the tilde), absolute path name, all others and return the
+   path, if file exists. */
 static char *inp_pathresolve_at(const char *name, const char *dir)
 {
+    /* the string might contain one or two environmental variables at its front:
+    .lib $ENV1/filename
+    .lib $ENV1\$ENV2\filename
+    .lib $ENV1
+    .lib $ENV1/$ENV2
+    */
+    if (name[0] == '$') {
+        char* s, * s1 = NULL, * tmpnam, * tmpcurr, * tmpcurr2 = NULL;
+        char* envvar, * envvar2 = NULL;
+        bool secenv = FALSE;
+        tmpcurr = tmpnam = copy(name);
+        while (*tmpcurr != '\0') {
+            if (*tmpcurr == '\\')
+                *tmpcurr = '/';
+            tmpcurr++;
+        }
+        tmpcurr = tmpnam;
+        /* extract env variable, add rest of token to its contents */
+        /* MS Windows directory separators */
+        envvar = gettok_char(&tmpcurr, '/', FALSE, FALSE);
+        if (envvar && ciprefix("/$", tmpcurr)) {
+            tmpcurr2 = tmpcurr + 1;
+            envvar2 = gettok_char(&tmpcurr2, '/', FALSE, FALSE);
+            secenv = TRUE;
+        }
+        if (envvar && !secenv) {
+            s = getenv(envvar + 1);
+            if (s) {
+                cp_vset(s, CP_STRING, envvar + 1);
+                char* newname = tprintf("%s%s", s, tmpcurr);
+                char* const r = inp_pathresolve(newname);
+                tfree(newname);
+                tfree(envvar);
+                return r;
+            }
+            fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar + 1);
+            controlled_exit(EXIT_BAD);
+        }
+        else if (envvar && envvar2) {
+            s = getenv(envvar + 1);
+            s1 = getenv(envvar2 + 1);
+            if (s && s1) {
+                char* newname = tprintf("%s/%s%s", s, s1, tmpcurr2);
+                char* const r = inp_pathresolve(newname);
+                tfree(newname);
+                tfree(envvar);
+                tfree(envvar2);
+                return r;
+            }
+            if (!s)
+                fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar + 1);
+            if (!s1)
+                fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar2 + 1);
+            controlled_exit(EXIT_BAD);
+        }
+        else if (envvar && !envvar2 && secenv) {
+            s = getenv(envvar + 1);/* skip "$" */
+            envvar2 = copy(tmpcurr);
+            s1 = getenv(envvar2 + 2);/* skip "$/" */
+            if (s && s1) {
+                char* newname = tprintf("%s/%s", s, s1);
+                char* const r = inp_pathresolve(newname);
+                tfree(newname);
+                tfree(envvar);
+                tfree(envvar2);
+                return r;
+            }
+            if (!s)
+                fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar + 1);
+            if (!s1)
+                fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar2 + 1);
+            controlled_exit(EXIT_BAD);
+        }
+
+        /* no directory separator found, just use the env entry (must include file name) */
+        envvar = tmpnam;
+        s = getenv(envvar + 1);/* skip '$' */
+        if (s) {
+            cp_vset(s, CP_STRING, envvar + 1);
+            char* const r = inp_pathresolve(s);
+            tfree(envvar);
+            return r;
+        }
+        fprintf(stderr, "Error: Cannot read environmental variable %s\n", envvar + 1);
+        tfree(envvar);
+        controlled_exit(EXIT_BAD);
+    }
+
     /* if name is an absolute path name,
      *   or if we haven't anything to prepend anyway
      */
@@ -1952,47 +2042,7 @@ static char *inp_pathresolve_at(const char *name, const char *dir)
         return inp_pathresolve(name);
     }
 
-    /* this might contain an environmental variable at the front of the string */
-    if (name[0] == '$') {
-        char* s, *tmpnam, *tmpcurr;
-        tmpcurr = tmpnam = copy(name);
-        /* extract env variable, add rest of token to its contents */
-        char *envvar = gettok_char(&tmpcurr, '\\', FALSE, FALSE);
-        if (envvar) {
-            s = getenv(envvar + 1);/* skip '$' */
-            if (s) {
-                cp_vset(s, CP_STRING, envvar + 1);
-                char* newname = tprintf("%s%s", s, tmpcurr);
-                char* const r = inp_pathresolve(newname);
-                tfree(newname);
-                return r;
-            }
-        } else {
-            tmpcurr = tmpnam;
-            envvar = gettok_char(&tmpcurr, '/', FALSE, FALSE);
-        }
-        if (envvar) {
-            s = getenv(envvar + 1);/* skip '$' */
-            if (s) {
-                cp_vset(s, CP_STRING, envvar + 1);
-                char* newname = tprintf("%s%s", s, tmpcurr);
-                char* const r = inp_pathresolve(newname);
-                tfree(newname);
-                return r;
-            }
-        /* no directory separator found, just use the env entry (must include file name) */
-        } else {
-            envvar = tmpnam;
-            s = getenv(envvar + 1);/* skip '$' */
-            if (s) {
-                cp_vset(s, CP_STRING, envvar + 1);
-                char* const r = inp_pathresolve(s);
-                return r;
-            }
-            tfree(envvar);
-        }
-    }
-
+    /* expand "~/" */
     if (name[0] == '~' && name[1] == '/') {
         char * const y = cp_tildexpand(name);
         if (y) {
