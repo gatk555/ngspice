@@ -430,7 +430,6 @@ case $host_os in
 		;;
 	*linux* )
 		AC_DEFINE([OS_COMPILED], [6], [Linux])
-		AM_CONDITIONAL([DLIBS_FULLY_RESOLVED], true)
 		;;
 	*darwin* )
 		AC_DEFINE([OS_COMPILED], [7], [macOS])

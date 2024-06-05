@@ -16,30 +16,26 @@ initdata2_DATA = ../../include/ngspice/cosim.h \
                  ../../include/ngspice/cmtypes.h
 
 # Icarus Verilog support: build two shared libraries.
-# The "x_" prefixes help to remove unwanted files after installation.
 
-pkglib_LTLIBRARIES = x_ivlng.la x_ivlngvpi.la
-x_ivlng_la_SOURCES = icarus_shim.c icarus_shim.h
-x_ivlng_la_CFLAGS = -I../../../../src/include
-x_ivlng_la_LDFLAGS = -module -shared -version-number 0
+pkglib_LTLIBRARIES = ivlng.la ivlngvpi.la
+ivlng_la_SOURCES = icarus_shim.c icarus_shim.h
+ivlng_la_CFLAGS = -I../../../../src/include
+ivlng_la_LDFLAGS = -module -shared -avoid-version
 
-x_ivlngvpi_la_SOURCES = vpi.c icarus_shim.h vpi_user.fake
-x_ivlngvpi_la_CFLAGS = -I../../../../src/include
-x_ivlngvpi_la_LDFLAGS = -module -shared  -version-number 0
+ivlngvpi_la_SOURCES = vpi.c icarus_shim.h vpi_user.fake
+ivlngvpi_la_CFLAGS = -I../../../../src/include
+ivlngvpi_la_LDFLAGS = -module -shared  -avoid-version
 
 if DLIBS_FULLY_RESOLVED
-x_ivlng_la_LDFLAGS += -no-undefined
-x_ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -l :x_ivlng-0.dll
+ivlng_la_LDFLAGS += -no-undefined
+ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -l:./ivlng.dll
 endif
 
-# Libtool makes and installs static libraries and symbolic links.
-# Rename and tidy after installation.
+# Libtool makes and installs static libraries, remove them after installation.
 
 install-exec-hook:
 	cd $(DESTDIR)$(pkglibdir); \
-	cp x_ivlng.so ivlng.so; \
-	cp x_ivlngvpi.so ivlng.vpi; \
-	rm x_ivlng*
+	rm -f ivlng*.a
 
 uninstall-hook:
 	rm -f $(DESTDIR)$(pkglibdir)/ivlng.vpi $(DESTDIR)$(pkglibdir)/ivlng.so
