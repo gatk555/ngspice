@@ -28,7 +28,7 @@ ivlngvpi_la_LDFLAGS = -module -shared  -avoid-version
 
 if DLIBS_FULLY_RESOLVED
 ivlng_la_LDFLAGS += -no-undefined
-ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -L.libs -l:ivlng.dll
+ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -L. -L.libs -Wl,-l:ivlng.dll
 endif
 
 # Libtool makes and installs static libraries, remove them after installation.
