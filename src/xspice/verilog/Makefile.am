@@ -22,20 +22,29 @@ ivlng_la_SOURCES = icarus_shim.c icarus_shim.h
 ivlng_la_CFLAGS = -I../../../../src/include
 ivlng_la_LDFLAGS = -module -shared -avoid-version
 
-ivlngvpi_la_SOURCES = vpi.c icarus_shim.h vpi_user.fake
+ivlngvpi_la_SOURCES = vpi.c icarus_shim.h vpi_user_dummy.h
 ivlngvpi_la_CFLAGS = -I../../../../src/include
 ivlngvpi_la_LDFLAGS = -module -shared  -avoid-version
 
+# On Windows, symbols in DLLs must be fully resolved.
+# Create a dummy libvvp.DLL so that Icarus Verilog need not be installed
+# for building.
+
 if DLIBS_FULLY_RESOLVED
+pkglib_LTLIBRARIES += libvvp.la
+libvvp_la_SOURCES = vpi_dummy.c vpi_user_dummy.h
+libvvp_la_LDFLAGS = -no-undefined -module -shared -avoid-version
 ivlng_la_LDFLAGS += -no-undefined
-ivlngvpi_la_LDFLAGS += -no-undefined -lvvp -L.libs -Wl,-l:ivlng.dll
+ivlngvpi_la_LIBADD = libvvp.la ivlng.la
+ivlngvpi_la_LDFLAGS += -no-undefined
 endif
 
 # Libtool makes and installs static libraries, remove them after installation.
+# On Windows, the dummy libvvp.* files are removed.
 
 install-exec-hook:
 	cd $(DESTDIR)$(pkglibdir); \
-	rm -f ivlng*a ; \
+	rm -f ivlng*a libvvp* ; \
 	mv ivlngvpi.* ivlng.vpi
 
 uninstall-hook:
