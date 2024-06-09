@@ -35,7 +35,7 @@ endif
 
 install-exec-hook:
 	cd $(DESTDIR)$(pkglibdir); \
-	rm -f ivlng*.la ; \
+	rm -f ivlng*a ; \
 	mv ivlngvpi.* ivlng.vpi
 
 uninstall-hook:
