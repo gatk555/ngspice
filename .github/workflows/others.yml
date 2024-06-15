@@ -101,3 +101,51 @@ jobs:
         with:
           name: Ngspice pre-master-43, Windows X86-64
           path: C:\Spice64
+
+  build-macos-arm64:
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/ngspice
+          ref: gh_pm43
+      - name: Install Dependencies
+        run: |
+          brew install automake bison
+          brew uninstall --ignore-dependencies ncurses readline
+          for i in libxaw ncurses readline ; do
+            brew fetch --force --bottle-tag=arm64_monterey $i
+            where=`brew --cache --bottle-tag=arm64_monterey $i`
+            brew install $where
+          done
+          # compile_macos_gcc.sh expects this path.  Kludge it.
+          sudo mkdir -p /opt/X11/include
+          sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
+      - name: Build arm64
+        run: |
+          PATH='/usr/local/opt/bison/bin:'$PATH
+          mkdir release
+          ./autogen.sh
+          cd release
+          ../configure --host arm64 --disable-openmp --with-x --enable-xspice --enable-cider --enable-predictor --enable-osdi --enable-klu --with-readline=/usr/local/opt/readline CFLAGS="-arch arm64 -m64 -O0 -g -Wall -I/opt/X11/include/freetype2 -I/usr/local/opt/readline/include" CXXFLAGS="-m64 -O2 -arch arm64" LDFLAGS="-m64 -g -L/usr/local/opt/readline/lib"
+          make
+          if [ ! -f src/ngspice ]; then false; fi
+      - name: Install arm64
+        run: |
+          cd release
+          sudo make install
+          cd ..
+          mkdir build
+          for i in bin lib share ; do
+            mkdir -p build/$i
+            cp -r /usr/local/$i/ngspice build/$i/
+          done
+          echo Create README.ngspice
+          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
+          echo 'The source code came from the pre-master-43 branch.' >> build/README.ngspice
+          echo 'Install to /usr/local.' >> build/README.ngspice
+      - name: Save arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ngspice pre-master-43, Macos arm64
+          path: build
