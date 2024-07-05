@@ -68,11 +68,11 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
     ,Ircx_Vrth=0.0,Irci,Irci_Vrci,Irci_Vrth=0.0,Irci_Vbci,Irci_Vbcx,Irbx
     ,Irbx_Vrbx,Irbx_Vrth=0.0,Irbi,Irbi_Vrbi,Irbi_Vrth=0.0,Irbi_Vbei,Irbi_Vbci
     ,Ire,Ire_Vre,Ire_Vrth=0.0,Irbp,Irbp_Vrbp,Irbp_Vrth=0.0,Irbp_Vbep
-    ,Irbp_Vbci,Qbe,Qbe_Vrth,Qbe_Vbei,Qbe_Vbci,Qbex,Qbex_Vrth
-    ,Qbex_Vbex,Qbc,Qbc_Vrth,Qbc_Vbci,Qbcx,Qbcx_Vrth,Qbcx_Vbcx
-    ,Qbep,Qbep_Vrth,Qbep_Vbep,Qbep_Vbci,Qbeo,Qbeo_Vbe,Qbco
+    ,Irbp_Vbci,Qbe,Qbe_Vrth=0.0,Qbe_Vbei,Qbe_Vbci,Qbex,Qbex_Vrth=0.0
+    ,Qbex_Vbex,Qbc,Qbc_Vrth=0.0,Qbc_Vbci,Qbcx,Qbcx_Vrth=0.0,Qbcx_Vbcx
+    ,Qbep,Qbep_Vrth=0.0,Qbep_Vbep,Qbep_Vbci,Qbeo,Qbeo_Vbe,Qbco
     ,Qbco_Vbc,Ibcp,Ibcp_Vrth=0.0,Ibcp_Vbcp,Iccp,Iccp_Vrth=0.0,Iccp_Vbep
-    ,Iccp_Vbci,Iccp_Vbcp,Irs,Irs_Vrs,Irs_Vrth=0.0,Qbcp,Qbcp_Vrth
+    ,Iccp_Vbci,Iccp_Vbcp,Irs,Irs_Vrs,Irs_Vrth=0.0,Qbcp,Qbcp_Vrth=0.0
     ,Qbcp_Vbcp,Irth,Irth_Vrth=0.0,Ith=0.0,Ith_Vrth=0.0,Ith_Vbei=0.0,Ith_Vbci=0.0
     ,Ith_Vcei=0.0,Ith_Vbex=0.0,Ith_Vbep=0.0,Ith_Vrs=0.0,Ith_Vbcp=0.0,Ith_Vcep=0.0,Ith_Vrcx=0.0
     ,Ith_Vrci=0.0,Ith_Vbcx=0.0,Ith_Vrbx=0.0,Ith_Vrbi=0.0,Ith_Vre=0.0,Ith_Vrbp=0.0,Qcth=0.0
@@ -706,8 +706,9 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
                 *(ckt->CKTstate0 + here->VBICqbeo) = Qbeo;
                 *(ckt->CKTstate0 + here->VBICqbco) = Qbco;
                 *(ckt->CKTstate0 + here->VBICqbcp) = Qbcp;
-                if (here->VBIC_selfheat)
+                if (here->VBIC_selfheat) {
                     *(ckt->CKTstate0 + here->VBICqcth) = Qcth;
+                }
 
                 here->VBICcapbe = Qbe_Vbei;
                 here->VBICcapbex = Qbex_Vbex;
@@ -716,7 +717,7 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
                 here->VBICcapbep = Qbep_Vbep;
                 here->VBICcapbcp = Qbcp_Vbcp;
                 if (here->VBIC_selfheat)
-                    here->VBICcapcth = Qcth_Vrth;
+                    here->VBICcapcth  = Qcth_Vrth;
 
                 /*
                  *   store small-signal parameters
@@ -734,8 +735,15 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
                         *(ckt->CKTstate0 + here->VBICcqbeo)   = Qbeo_Vbe;
                         *(ckt->CKTstate0 + here->VBICcqbco)   = Qbco_Vbc;
                         *(ckt->CKTstate0 + here->VBICcqbcp)   = Qbcp_Vbcp;
-                        if (here->VBIC_selfheat)
-                            *(ckt->CKTstate0 + here->VBICcqcth)   = Qcth_Vrth;
+                        if (here->VBIC_selfheat) {
+                            here->VBICcapcth  = Qcth_Vrth;
+                            here->VBICcapqbeth  = Qbe_Vrth;
+                            here->VBICcapqbexth = Qbex_Vrth;
+                            here->VBICcapqbcth  = Qbc_Vrth;
+                            here->VBICcapqbcxth = Qbcx_Vrth;
+                            here->VBICcapqbepth = Qbep_Vrth;
+                            here->VBICcapqbcpth = Qbcp_Vrth;
+                        }
                         continue; /* go to 1000 */
                     }
                     /*
@@ -847,6 +855,7 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
                 }
             }
 
+            *(ckt->CKTstate0 + here->VBICvrth)      = Vrth;
             *(ckt->CKTstate0 + here->VBICvbei)      = Vbei;
             *(ckt->CKTstate0 + here->VBICvbex)      = Vbex;
             *(ckt->CKTstate0 + here->VBICvbci)      = Vbci;
@@ -900,6 +909,40 @@ VBICload(GENmodel *inModel, CKTcircuit *ckt)
             {
                 *(ckt->CKTstate0 + here->VBICcqcth)     = Icth;
                 *(ckt->CKTstate0 + here->VBICicth_Vrth) = Icth_Vrth;
+
+                here->VBICibe_Vrth  = Ibe_Vrth;
+                here->VBICibex_Vrth = Ibex_Vrth;
+                here->VBICitzf_Vrth = Itzf_Vrth;
+                here->VBICitzr_Vrth = Itzr_Vrth;
+                here->VBICibc_Vrth  = Ibc_Vrth;
+                here->VBICibep_Vrth = Ibep_Vrth;
+                here->VBICircx_Vrth = Ircx_Vrth;
+                here->VBICirci_Vrth = Irci_Vrth;
+                here->VBICirbx_Vrth = Irbx_Vrth;
+                here->VBICirbi_Vrth = Irbi_Vrth;
+                here->VBICire_Vrth  = Ire_Vrth;
+                here->VBICirbp_Vrth = Irbp_Vrth;
+                here->VBICibcp_Vrth = Ibcp_Vrth;
+                here->VBICiccp_Vrth = Iccp_Vrth;
+                here->VBICirs_Vrth  = Irs_Vrth;
+                here->VBICirth_Vrth = Irth_Vrth;
+                here->VBICith_Vrth  = Ith_Vrth;
+                here->VBICith_Vbei  = Ith_Vbei;
+                here->VBICith_Vbci  = Ith_Vbci;
+                here->VBICith_Vcei  = Ith_Vcei;
+                here->VBICith_Vbex  = Ith_Vbex;
+                here->VBICith_Vbep  = Ith_Vbep;
+                here->VBICith_Vbcp  = Ith_Vbcp;
+                here->VBICith_Vcep  = Ith_Vcep;
+                here->VBICith_Vrci  = Ith_Vrci;
+                here->VBICith_Vbcx  = Ith_Vbcx;
+                here->VBICith_Vrbi  = Ith_Vrbi;
+                here->VBICith_Vrbp  = Ith_Vrbp;
+                here->VBICith_Vrcx  = Ith_Vrcx;
+                here->VBICith_Vrbx  = Ith_Vrbx;
+                here->VBICith_Vre   = Ith_Vre;
+                here->VBICith_Vrs   = Ith_Vrs;
+
             }
 load:
             /*

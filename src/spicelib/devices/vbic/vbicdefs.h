@@ -249,6 +249,47 @@ typedef struct sVBICinstance {
     double VBICcapbcp;
     double VBICcapcth;
 
+    double VBICcapqbeth;
+    double VBICcapqbexth;
+    double VBICcapqbcth;
+    double VBICcapqbcxth;
+    double VBICcapqbepth;
+    double VBICcapqbcpth;
+
+    double VBICibe_Vrth;
+    double VBICibex_Vrth;
+    double VBICitzf_Vrth;
+    double VBICitzr_Vrth;
+    double VBICibc_Vrth;
+    double VBICibep_Vrth;
+    double VBICircx_Vrth;
+    double VBICirci_Vrth;
+    double VBICirbx_Vrth;
+    double VBICirbi_Vrth;
+    double VBICire_Vrth;
+    double VBICirbp_Vrth;
+    double VBICibcp_Vrth;
+    double VBICiccp_Vrth;
+    double VBICirs_Vrth;
+    double VBICirth_Vrth;
+    double VBICith_Vrth;
+
+    double VBICith_Vbei;
+    double VBICith_Vbci;
+    double VBICith_Vcei;
+    double VBICith_Vbex;
+    double VBICith_Vbep;
+    double VBICith_Vbcp;
+    double VBICith_Vcep;
+    double VBICith_Vrci;
+    double VBICith_Vbcx;
+    double VBICith_Vrbi;
+    double VBICith_Vrbp;
+    double VBICith_Vrcx;
+    double VBICith_Vrbx;
+    double VBICith_Vre;
+    double VBICith_Vrs;
+
     int VBIC_selfheat; /* self-heating enabled  */
 
 #ifndef NONOISE
