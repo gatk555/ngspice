@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm43
+          ref: gh_pm44
       - name: Install Dependencies
         run: |
           brew install make automake bison
@@ -34,12 +34,12 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-43 branch.' > build/README.ngspice
+          echo 'The source code came from the pre-master-44 branch.' > build/README.ngspice
           echo 'Install to /usr/local.' > build/README.ngspice
       - name: Save X86_64
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-43, Macos X86_64
+          name: Ngspice pre-master-44, Macos X86_64
           path: build
       - name: Clean
         run: |
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm43
+          ref: gh_pm44
       - uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
@@ -86,7 +86,7 @@ jobs:
           msbuild %opt% visualc\vngspice.vcxproj
           echo Create README.ngspice
           echo This binary build ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
-          echo The source code came from the pre-master-43 branch. >> C:\Spice64\README.ngspice
+          echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
           echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
       - uses: actions/checkout@v4
         with:
@@ -99,7 +99,7 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-43, Windows X86-64
+          name: Ngspice pre-master-44, Windows X86-64
           path: C:\Spice64
 
   build-macos-arm64:
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm43
+          ref: gh_pm44
       - name: Install Dependencies
         run: |
           brew install automake bison
@@ -142,7 +142,7 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-43 branch.' >> build/README.ngspice
+          echo 'The source code came from the pre-master-44 branch.' >> build/README.ngspice
           echo 'Install to /usr/local.' >> build/README.ngspice
       - name: Save arm64
         uses: actions/upload-artifact@v4
