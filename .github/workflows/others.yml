@@ -23,6 +23,7 @@ jobs:
           gcc -v
           echo $PATH
           ls /usr/local/bin
+          ln -s /usr/local/bin/gcc-14 /usr/local/bin/gcc
           PATH='/usr/local/opt/bison/bin:'$PATH
           ./compile_macos_gcc.sh || true # Will fail to install
           if [ ! -f release/src/ngspice ]; then false; fi
