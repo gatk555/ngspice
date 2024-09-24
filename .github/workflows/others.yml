@@ -4,7 +4,7 @@ on:
 
 jobs:
   build-macos-x86_64:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
         with:
@@ -13,7 +13,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew install make automake bison
-          brew install libxaw gcc
+          brew install libxaw
           # compile_macos_gcc.sh expects this path.  Kludge it.
           sudo mkdir -p /opt/X11/include
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
