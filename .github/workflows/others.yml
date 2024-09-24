@@ -19,6 +19,7 @@ jobs:
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
       - name: Build X86_64
         run: |
+          which gcc
           PATH='/usr/local/opt/bison/bin:'$PATH
           ./compile_macos_gcc.sh || true # Will fail to install
           if [ ! -f release/src/ngspice ]; then false; fi
