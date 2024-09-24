@@ -22,8 +22,9 @@ jobs:
           which gcc
           gcc -v
           echo $PATH
-          ls /usr/local/bin
           ln -s /usr/local/bin/gcc-14 /usr/local/bin/gcc
+          which gcc
+          export CC=/usr/local/bin/gcc-14
           PATH='/usr/local/opt/bison/bin:'$PATH
           ./compile_macos_gcc.sh || true # Will fail to install
           if [ ! -f release/src/ngspice ]; then false; fi
