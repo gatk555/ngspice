@@ -51,5 +51,5 @@ jobs:
       - name: Save arm64
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-43, Macos arm64
+          name: Ngspice pre-master-44, Macos arm64
           path: build
