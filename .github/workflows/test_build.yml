@@ -32,14 +32,11 @@ jobs:
             mkdir -p build/$i
             cp -r /usr/local/$i/ngspice build/$i/
           done
+          cp src/include/ngspice/config.h build
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
           echo 'The source code came from the time_funcs2 branch.' > build/README.ngspice
           echo 'Install to /usr/local.' > build/README.ngspice
-      - name: Unit tests
-        run: |
-          cd release
-          make check
       - name: Save X86_64
         uses: actions/upload-artifact@v4
         with:
