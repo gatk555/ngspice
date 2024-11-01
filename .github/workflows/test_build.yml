@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm44
+          ref: time_funcs2
       - name: Build
         run: |
           ./compile_min.sh
