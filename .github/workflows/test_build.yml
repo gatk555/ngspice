@@ -1,50 +1,47 @@
-name: Build a test branch
+# Build ngspice with MSYS/UCRT64
+name: Win_Dev_Msys
 on:
   workflow_dispatch:
 
 jobs:
-  build-macos-x86_64:
-    runs-on: macos-13
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      MINGW_ARCH: MINGW64
     steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          update: true
+          install: >
+            base-devel
+            mingw-w64-x86_64-toolchain
+            autotools
+      - name: Flex and Bison
+        shell: cmd
+        run: |
+          md ..\flex-bison
+          cd ..\flex-bison
+          curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
+          unzip win_flex_bison-2.5.25
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: time_funcs2
-      - name: Install Dependencies
+          ref: gh_pm44
+      - name: Build
         run: |
-          brew install make automake bison
-          brew install libxaw
-          # compile_macos_gcc.sh expects this path.  Kludge it.
-          sudo mkdir -p /opt/X11/include
-          sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
-      - name: Build X86_64
+          ./compile_min.sh
+      - uses: actions/checkout@v4
+      - name: Add DLL
+        shell: cmd
         run: |
-          PATH='/usr/local/opt/bison/bin:'$PATH
-          ./compile_macos_clang.sh || true # Will fail to install
-          if [ ! -f release/src/ngspice ]; then false; fi
-      - name: Install X86_64
-        run: |
-          cd release
-          sudo make install
-          cd ..
-          mkdir build
-          for i in bin lib share ; do
-            mkdir -p build/$i
-            cp -r /usr/local/$i/ngspice build/$i/
-          done
-          cp release/src/include/ngspice/config.h build
-          echo Create README.ngspice
-          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the time_funcs2 branch.' > build/README.ngspice
-          echo 'Install to /usr/local.' > build/README.ngspice
-      - name: Save X86_64
+          unzip libomp.zip
+          copy libomp140.x86_64.dll C:\Spice64\bin\vcomp140.dll
+      - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice time_funcs2, Macos X86_64
-          path: build
-      - name: Clean
-        run: |
-          rm -rf release build
-          for i in bin lib share ; do
-            sudo rm -rf /usr/local/$i/ngspice
-          done
+          name: Ngspice pre-master-44, Windows 64-bit with MSYS/UCRT64
+          path: C:\Spice64
