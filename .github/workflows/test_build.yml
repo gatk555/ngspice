@@ -1,5 +1,5 @@
 # Build ngspice with MSYS/UCRT64
-name: Win_Dev_Msys
+name: Test build
 on:
   workflow_dispatch:
 
@@ -9,8 +9,6 @@ jobs:
     defaults:
       run:
         shell: msys2 {0}
-    env:
-      MINGW_ARCH: MINGW64
     steps:
       - uses: msys2/setup-msys2@v2
         with:
@@ -18,7 +16,7 @@ jobs:
           update: true
           install: >
             base-devel
-            mingw-w64-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-toolchain
             autotools
       - name: Flex and Bison
         shell: cmd
@@ -34,8 +32,10 @@ jobs:
       - name: Build
         run: |
           ./compile_min.sh
-      - uses: actions/checkout@v4
       - name: Add DLL
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/test
         shell: cmd
         run: |
           unzip libomp.zip
