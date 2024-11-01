@@ -32,10 +32,10 @@ jobs:
       - name: Build
         run: |
           ./compile_min.sh
-      - name: Add DLL
       - uses: actions/checkout@v4
         with:
           repository: gatk555/test
+      - name: Add DLL
         shell: cmd
         run: |
           unzip libomp.zip
