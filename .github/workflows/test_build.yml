@@ -43,5 +43,5 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-44, Windows 64-bit with MSYS/UCRT64
+          name: Ngspice pre-master-44, Windows 64-bit with MSYS and UCRT64
           path: C:\Spice64
