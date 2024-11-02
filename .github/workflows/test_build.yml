@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: time_funcs2
+          ref: time_funcs4
       - name: Build
         run: |
           ./compile_min.sh
@@ -43,5 +43,51 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-44, Windows 64-bit with MSYS and UCRT64
+          name: Ngspice time_funcs4 branch, Windows 64-bit with MSYS and UCRT64
           path: C:\Spice64
+
+  build-macos-x86_64:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/ngspice
+          ref: time_funcs4
+      - name: Install Dependencies
+        run: |
+          brew install make automake bison
+          brew install libxaw
+          # compile_macos_gcc.sh expects this path.  Kludge it.
+          sudo mkdir -p /opt/X11/include
+          sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
+      - name: Build X86_64
+        run: |
+          PATH='/usr/local/opt/bison/bin:'$PATH
+          ./compile_macos_clang.sh || true # Will fail to install
+          if [ ! -f release/src/ngspice ]; then false; fi
+      - name: Install X86_64
+        run: |
+          cd release
+          sudo make install
+          cd ..
+          mkdir build
+          for i in bin lib share ; do
+            mkdir -p build/$i
+            cp -r /usr/local/$i/ngspice build/$i/
+          done
+          cp release/src/include/ngspice/config.h build
+          echo Create README.ngspice
+          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
+          echo 'The source code came from the time_funcs4 branch.' > build/README.ngspice
+          echo 'Install to /usr/local.' > build/README.ngspice
+      - name: Save X86_64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ngspice time_funcs4, Macos X86_64
+          path: build
+      - name: Clean
+        run: |
+          rm -rf release build
+          for i in bin lib share ; do
+            sudo rm -rf /usr/local/$i/ngspice
+          done
