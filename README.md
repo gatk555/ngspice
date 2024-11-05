@@ -1,4 +1,4 @@
-This repository contains a copy of the main development branch of Ngspice (https://ngspice.sourceforge.io/) and scripts for Github Actions that run daily to update the copy and build it. There are builds for Linux (X64, gcc compiler), Windows (X64, MSVC) and MacOS (X86_64, gcc and arm64, clang).  The resulting binaries can be found under the "Actions" tab above.  (Look for "artifacts".)  A Github login is required for downloading.
+This repository contains a copy of the main development branch of Ngspice (https://ngspice.sourceforge.io/) and scripts for Github Actions that run daily to update the copy and build it. There are builds for Linux (X64, gcc compiler), Windows (X64, both MSVC and MSYS) and MacOS (X86_64, clang).  (Previous MacOS builds for ARM64 are suspended until a build bug has been resolved.)  The resulting binaries can be found under the "Actions" tab above.  (Look for "artifacts".)  A Github login is required for downloading.
 
 The binaries are packaged as ZIP files intended to be expanded to /usr/local or C:\Spice64.  For Unix-like OSs the execute permission is not preserved.  Use this command to restore it:
 
@@ -11,4 +11,4 @@ and for a Macintosh this may also be needed:
 
 A file, /usr/local/README.ngspice, identifies the origin of the files, and for Linux the latest revision that was included in the build.
 
-This branch is for this file and Github Actions workflow files only, the ngspice source is on a branch with a name of the form pm_XX, depending on the current Sourceforge development branch.  There is currently one local change to the source: the MacOS compile script has been modified to support cross-compiling for arm64.
+This branch is for this file and Github Actions workflow files only, the ngspice source is on a branch with a name of the form pm_XX, depending on the current Sourceforge development branch.

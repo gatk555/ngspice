@@ -85,7 +85,7 @@ jobs:
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
           echo Create README.ngspice
-          echo This binary build ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
+          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
           echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
           echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
       - uses: actions/checkout@v4
@@ -100,4 +100,49 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ngspice pre-master-44, Windows X86-64
+          path: C:\Spice64
+  build-win_msys:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ucrt64
+          update: true
+          install: >
+            base-devel
+            mingw-w64-ucrt-x86_64-toolchain
+            autotools
+      - name: Flex and Bison
+        shell: cmd
+        run: |
+          md ..\flex-bison
+          cd ..\flex-bison
+          curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
+          unzip win_flex_bison-2.5.25
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/ngspice
+          ref: gh_pm44
+      - name: Build
+        run: |
+          ./compile_min.sh
+          echo Create README.ngspice
+          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
+          echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
+          echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/test
+      - name: Add DLL
+        shell: cmd
+        run: |
+          unzip libomp.zip
+          copy libomp140.x86_64.dll C:\Spice64\bin\vcomp140.dll
+      - name: Save
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ngspice pre-master-44, Windows 64-bit with MSYS and UCRT64
           path: C:\Spice64
