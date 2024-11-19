@@ -1,5 +1,4 @@
-# Build ngspice with MSYS/UCRT64
-name: Test build
+name: Build a test branch
 on:
   workflow_dispatch:
 
@@ -16,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: ga_dev
+          ref: gh_pm44
       - uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
@@ -40,9 +39,10 @@ jobs:
           set config=console_release
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
+	  dir
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
-          echo The source code came from the ga_dev branch. >> C:\Spice64\README.ngspice
+          echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
           echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
       - uses: actions/checkout@v4
         with:
@@ -55,9 +55,9 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice brabch ga_dev, Windows X86-64
+          name: Ngspice pre-master-44, Windows X86-64 console only
           path: C:\Spice64
-  test:
+  build-win_msys:
     runs-on: windows-latest
     defaults:
       run:
@@ -81,10 +81,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: ga_dev
+          ref: gh_pm44
       - name: Build
         run: |
-          ./compile_min.sh
+	  ./autogen
+          mkdir release
+          cd release
+          ../configure --enable-cider prefix="C:/Spice64" CFLAGS="-m64 -O2" LDFLAGS="-m64 -s"
+          make
+          cd ..
+          echo Create README.ngspice
+          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
+          echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
+          echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
       - uses: actions/checkout@v4
         with:
           repository: gatk555/test
@@ -96,51 +105,5 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice ga_dev branch, Windows 64-bit with MSYS and UCRT64
+          name: Ngspice pre-master-44, Windows 64-bit console version with MSYS and UCRT64
           path: C:\Spice64
-
-  build-macos-x86_64:
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: gatk555/ngspice
-          ref: ga_dev
-      - name: Install Dependencies
-        run: |
-          brew install make automake bison
-          brew install libxaw
-          # compile_macos_gcc.sh expects this path.  Kludge it.
-          sudo mkdir -p /opt/X11/include
-          sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
-      - name: Build X86_64
-        run: |
-          PATH='/usr/local/opt/bison/bin:'$PATH
-          ./compile_macos_clang.sh || true # Will fail to install
-          if [ ! -f release/src/ngspice ]; then false; fi
-      - name: Install X86_64
-        run: |
-          cd release
-          sudo make install
-          cd ..
-          mkdir build
-          for i in bin lib share ; do
-            mkdir -p build/$i
-            cp -r /usr/local/$i/ngspice build/$i/
-          done
-          cp release/src/include/ngspice/config.h build
-          echo Create README.ngspice
-          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the ga_dev branch.' > build/README.ngspice
-          echo 'Install to /usr/local.' > build/README.ngspice
-      - name: Save X86_64
-        uses: actions/upload-artifact@v4
-        with:
-          name: Ngspice ga_dev, Macos X86_64
-          path: build
-      - name: Clean
-        run: |
-          rm -rf release build
-          for i in bin lib share ; do
-            sudo rm -rf /usr/local/$i/ngspice
-          done
