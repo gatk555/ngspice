@@ -39,7 +39,7 @@ jobs:
           set config=console_release
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
-	  dir
+          dir
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
           echo The source code came from the pre-master-44 branch. >> C:\Spice64\README.ngspice
@@ -84,7 +84,7 @@ jobs:
           ref: gh_pm44
       - name: Build
         run: |
-	  ./autogen
+          ./autogen
           mkdir release
           cd release
           ../configure --enable-cider prefix="C:/Spice64" CFLAGS="-m64 -O2" LDFLAGS="-m64 -s"
