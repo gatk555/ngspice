@@ -40,10 +40,12 @@ jobs:
           set config=console_release
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
-          copy vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
+          copy visualc\vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
           cd visualc
           dir /s *.exe
           cd C:\Spice64
+          dir
+          dir bin
           move bin\ngspice.exe bin\ngspice_con.exe
           move bin\gui.exe bin\ngspice.exe
           echo Create README.ngspice
@@ -92,6 +94,7 @@ jobs:
       - name: Build
         run: |
           ln -s /ucrt64/include/ncurses/curses.h /ucrt64/include
+          ln -s /ucrt64/include/ncurses/term.h /ucrt64/include
           ./autogen.sh
           mkdir release
           cd release
