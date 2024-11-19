@@ -37,10 +37,10 @@ jobs:
           move visualc\xspice\%cms%\*.cm visualc\%cms%
           msbuild %opt% visualc\KLU/KLU_COMPLEX.vcxproj
           msbuild %opt% visualc\vngspice.vcxproj
-          move C:\Spice64\bin\ngspice.exe C:\Spice64\bin\gui.exe
           set config=console_release
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
+          copy vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
           cd visualc
           dir /s *.exe
           cd C:\Spice64
@@ -91,6 +91,7 @@ jobs:
           ref: gh_pm44
       - name: Build
         run: |
+          ln -s /ucrt64/include/ncurses/curses.h /ucrt64/include
           ./autogen.sh
           mkdir release
           cd release
