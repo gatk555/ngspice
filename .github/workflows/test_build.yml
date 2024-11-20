@@ -38,14 +38,14 @@ jobs:
           msbuild %opt% visualc\KLU/KLU_COMPLEX.vcxproj
           msbuild %opt% visualc\vngspice.vcxproj
           msbuild %opt% visualc\sharedspice.vcxproj
-          md c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.dll c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.def c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.lib c:\Spice64\bin-dll
           set config=console_release
           set opt=-property:Configuration=%config% -property:Platform=%plat%
           msbuild %opt% visualc\vngspice.vcxproj
           copy visualc\vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
+          md c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.dll c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.exp c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.lib c:\Spice64\bin-dll
           c:
           cd \Spice64
           move bin\ngspice.exe bin\ngspice_con.exe
