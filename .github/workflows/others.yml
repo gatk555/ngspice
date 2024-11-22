@@ -107,13 +107,15 @@ jobs:
         run: |
           unzip libomp.zip
           copy libomp140.x86_64.dll C:\Spice64\bin\vcomp140.dll
-      - name: Save
+          unzip windows_osdi.zip
+          copy *.osdi C:\Spice64\lib\ngspice
+    - name: Save
         uses: actions/upload-artifact@v4
         with:
           name: Ngspice pre-master-44, Windows X86-64
           path: C:\Spice64
 
-build-win_msys:
+  build-win_msys:
     runs-on: windows-latest
     defaults:
       run:
