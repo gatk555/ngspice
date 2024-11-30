@@ -1447,6 +1447,7 @@ AC_CONFIG_FILES([Makefile
                  src/xspice/ipc/Makefile
                  src/xspice/idn/Makefile
                  src/xspice/verilog/Makefile
+                 src/xspice/vhdl/Makefile
                  src/osdi/Makefile
                  tests/Makefile
                  tests/bsim1/Makefile
