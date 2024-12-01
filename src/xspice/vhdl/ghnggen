@@ -27,7 +27,7 @@ if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
    set windows=1
    set dirsep1="\\"
    set dirsep2="/"
-   set export_option="--export-all-symbols"
+   set export_option="-export-all-symbols"
 else
    set windows=0
    set dirsep1="/"
