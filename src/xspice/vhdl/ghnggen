@@ -27,7 +27,7 @@ if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
    set windows=1
    set dirsep1="\\"
    set dirsep2="/"
-   set export_option="-export-all-symbols"
+   set export_option="--export-all-symbols"
 else
    set windows=0
    set dirsep1="/"
@@ -149,17 +149,9 @@ else
   setcs include="-I..$dirsep1$stem" // Relative path
 end
 
-// Check for ghdl_shim.o and ghdlng.vpi files in the current directory.
-// If not present, build them.
+// Check for ghdl_shim.o in the current directory. If not present, build it.
 
 set silent_fileio
-fopen fh ghdlng.vpi
-if $fh < 0
-    shell ghdl --vpi-compile clang -g -c $include $stem/ghdl_vpi.c -o ghdl_vpi.o
-    shell ghdl --vpi-link clang ghdl_vpi.o -o ghdlng.vpi -lm -lpthread
-else
-    fclose $fh
-end
 fopen fh ghdl_shim.o
 if $fh < 0
     shell clang  -c -g -fPIC $include -o ghdl_shim.o $stem/ghdl_shim.c
@@ -168,12 +160,30 @@ else
 end
 unset silent_fileio
 
-// Compile the code.
+// Compile the VHDL code.
 
 shell ghdl -a $argv
 strcmp bad "$shellstatus" "0"
 if $bad = 0
-   echo ghdl -e -shared "-Wl,$export_option" "-Wl,ghdl_shim.o" $base
    shell ghdl -e -shared "-Wl,$export_option" "-Wl,ghdl_shim.o" $base
+else
+   quit
 end
+
+// Check for ghdlng.vpi in the current directory. If not present, build it.
+
+set silent_fileio
+fopen fh ghdlng.vpi
+if $fh < 0
+    shell ghdl --vpi-compile clang -g -c $include $stem/ghdl_vpi.c -o ghdl_vpi.o
+    if $windows
+        shell ghdl --vpi-link clang ghdl_vpi.o -o ghdlng.vpi -lm -l$base
+    else
+        shell ghdl --vpi-link clang ghdl_vpi.o -o ghdlng.vpi -lm -lpthread
+    end
+else
+    fclose $fh
+end
+unset silent_fileio
+
 quit

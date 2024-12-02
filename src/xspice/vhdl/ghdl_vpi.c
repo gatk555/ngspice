@@ -59,8 +59,6 @@
 #define DBG(...)
 #endif
 
-extern uint64_t __ghdl_now;
-
 static PLI_INT32 next_advance_cb(struct t_cb_data *cb);
 
 /* Get current simulation time: no module-specific values. */
@@ -72,7 +70,6 @@ static double get_time(struct ng_ghdl *ctx)
 
     vpi_get_time(NULL, &now);
     ticks = ((uint64_t)now.high << 32) + now.low;
-if (__ghdl_now != ticks) DBG("Got %ul ticks and %ul base\n", ticks, __ghdl_now);
     return ticks * ctx->tick_length;
 }
 
