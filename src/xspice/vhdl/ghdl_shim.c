@@ -179,7 +179,7 @@ static void cleanup(struct co_info *pinfo)
 }
 
 /* Static variable and function for passing context from this library
- * to an instance of ivlng.vpi running in the GHDL thread.
+ * to an instance of ghdlng.vpi running in the GHDL thread.
  * Get_ng_ghdl() is called in the GHDL thread and must synchronise.
  * XSPICE initialisation is single-threaded, so a static is OK.
  */
@@ -213,10 +213,6 @@ void *run_ghdl(void *arg)
         for (new_argc = 0; new_argc < pinfo->sim_argc; new_argc++)
             new_argv[new_argc] = pinfo->sim_argv[new_argc];
     }
-
-    /* The VPI file will usually be /usr/local/lib/ngspice/ghdllng.vpi
-     * or C:\Spice64\lib\ngspice\ghdlng.vpi.
-     */
 
     if (pinfo->lib_argc >= 2 && pinfo->lib_argv[1][0]) // Explicit VPI file.
         file = pinfo->lib_argv[1];
