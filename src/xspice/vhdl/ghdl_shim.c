@@ -15,7 +15,7 @@
 
 /* The GHDL code runs on its own stack, handled by cr_xxx() functions. */
 
-#include "coroutine_shim.h"
+#include "ngspice/coroutine_shim.h"
 
 #include "ngspice/cmtypes.h" // For Digital_t
 #include "ngspice/cosim.h"

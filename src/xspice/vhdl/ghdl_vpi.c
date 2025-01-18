@@ -33,7 +33,7 @@
 
 /* The VVP code runs on its own stack, handled by cr_xxx() functions. */
 
-#include "coroutine_cosim.h"
+#include "ngspice/coroutine_cosim.h"
 
 #include "ngspice/cmtypes.h" // For Digital_t
 #include "ngspice/cosim.h"
