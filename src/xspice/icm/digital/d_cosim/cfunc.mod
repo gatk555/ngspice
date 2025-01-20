@@ -131,6 +131,13 @@ static const char *exts[] = { "", ".so", ".DLL", NULL};
 #define NGSPICELIBDIR "C:\\Spice64\\lib\\ngspice" // Defined by configure?
 #endif
 
+#elif defined(__APPLE__)
+
+static const char *exts[] = { "", ".so", ".dylib", NULL};
+#define CMPFN strcmp
+#define TESTFN(f) (access(f, R_OK) == 0)
+#define SLIBFILE "dynamic library"
+
 #else
 
 static const char *exts[] = { "", ".so", NULL};
@@ -138,6 +145,7 @@ static const char *exts[] = { "", ".so", NULL};
 #define TESTFN(f) (access(f, R_OK) == 0)
 #define SLIBFILE "shared library"
 #endif
+
 #define FLAGS  (RTLD_GLOBAL | RTLD_NOW)
 
 static void *cosim_dlopen(const char *fn)
@@ -422,6 +430,8 @@ static bool check_input(struct instance *ip, Digital_t *ovp,
             while (ip->q_index >= 0 && ip->q[ip->q_index].when >= rp->when)
                 --ip->q_index;
             if (ip->q_index >= 0) {
+                DBG("Input Q full: d_cosim setting back to %.15g.",
+                    (rp->when + ip->q[ip->q_index].when) / 2);
                 cm_analog_set_temp_bkpt(
                     (rp->when + ip->q[ip->q_index].when) / 2);
             } else {
@@ -473,7 +483,8 @@ void ucm_d_cosim(ARGS)
         fn = PARAM(simulation);
         handle = cosim_dlopen(fn);
         if (!handle) {
-            cm_message_send("d_cosim failed to load simulation binary.");
+            cm_message_printf("d_cosim failed to load simulation binary %s.",
+                              fn);
             return;
         }
         ifp = (void (*)(struct co_info *))dlsym(handle, "Cosim_setup");

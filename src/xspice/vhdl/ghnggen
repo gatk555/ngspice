@@ -24,12 +24,17 @@ end
 set noglob
 
 if $oscompiled = 2 | $oscompiled = 3 | $oscompiled = 8 // Windows
-   set windows=1
-   set dirsep1="\\"
-   set dirsep2="/"
+    set windows=1
+    set dirsep1="\\"
+    set dirsep2="/"
 else
-   set windows=0
-   set dirsep1="/"
+    set windows=0
+    set dirsep1="/"
+    if $oscompiled = 7 // MacOS needs an option to allow undefined symbols.
+        set ld_magic="-Wl,-undefined,dynamic_lookup"
+    else 
+        set ld_magic=""
+    end
 end
 
 // Is there a "-top" option first?
@@ -177,7 +182,7 @@ if $fh < 0
     if $windows
         shell ghdl --vpi-link clang ghdl_vpi.o -o ghdlng.vpi -lm -L. -l$base
     else
-        shell ghdl --vpi-link clang ghdl_vpi.o -o ghdlng.vpi -lm -lpthread
+        shell ghdl --vpi-link clang $ld_magic ghdl_vpi.o -o ghdlng.vpi -lm -lpthread
     end
 else
     fclose $fh

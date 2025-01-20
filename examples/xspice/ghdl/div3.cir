@@ -3,6 +3,11 @@ Test divide by 3 VHDL code
 adut null [clk cout] d3
 .model d3 d_cosim simulation=./wrapper.so
 
+* Digital clock signal
+
+aclock 0 clk clock
+.model clock d_osc cntl_array=[-1 1] freq_array=[1Meg 1Meg]
+
 .tran 100n 10u
 .control
 *run
