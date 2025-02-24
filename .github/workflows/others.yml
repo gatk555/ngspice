@@ -17,6 +17,9 @@ jobs:
           # compile_macos_gcc.sh expects this path.  Kludge it.
           sudo mkdir -p /opt/X11/include
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
+      - name: Save SHA for Windows
+        run: |
+          echo "HEAD_DESC=\"`git log -1 --pretty=oneline`\"" >> "$GITHUB_ENV"
       - name: Build X86_64
         run: |
           PATH='/usr/local/opt/bison/bin:'$PATH
@@ -34,7 +37,10 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-45 branch.' > build/README.ngspice
+          echo 'The source code came from the pre-master-45 branch with head revision:' >> build/README.ngspice
+          echo >> build/README.ngspice
+          git log -1 >> build/README.ngspice
+          echo >> build/README.ngspice
           echo 'Install to /usr/local.' > build/README.ngspice
       - name: Save X86_64
         uses: actions/upload-artifact@v4
@@ -48,8 +54,59 @@ jobs:
             sudo rm -rf /usr/local/$i/ngspice
           done
 
+  build-macos-arm64:
+    runs-on: macos-14
+    outputs:
+      HEAD_DESC: ${{ steps.set-output.outputs.HEAD_DESC }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: gatk555/ngspice
+          ref: gh_pm45
+      - name: Save SHA for Windows
+        id: set-output
+        run: |
+          echo "HEAD_DESC=\"`git log -1 --pretty=oneline`\"" >> "$GITHUB_OUTPUT"
+      - name: Install Dependencies
+        run: |
+          brew install automake libtool ncurses bison libxaw
+          # compile_macos_gcc.sh expects this path.  Kludge it.
+          sudo mkdir -p /opt/X11/include
+          sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
+      - name: Build arm64
+        run: |
+          export PATH="/opt/homebrew/opt/bison/bin:$PATH"
+          ./autogen.sh
+          mkdir release
+          cd release
+          ../configure  --disable-openmp --with-x --enable-cider --with-readline=/opt/homebrew/opt/readline CC=clang CFLAGS="-m64 -O2 -I/opt/X11/include/freetype2 -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/ncurses/include" LDFLAGS="-m64 -L/opt/homebrew/opt/readline/lib -L/usr/local/lib"
+          make -j3
+          if [ ! -f src/ngspice ]; then false; fi
+      - name: Install arm64
+        run: |
+          cd release
+          sudo make install
+          mkdir build
+          for i in bin lib share share/man/man1 ; do
+            mkdir -p build/$i
+            cp -r /usr/local/$i/ngspice* build/$i/
+          done
+          echo Create README.ngspice
+          echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
+          echo 'The source code came from the pre-master-45 branch with head revision:' >> build/README.ngspice
+          echo >> build/README.ngspice
+          git log -1 >> build/README.ngspice
+          echo >> build/README.ngspice
+          echo 'Install to /usr/local.' >> build/README.ngspice
+      - name: Save arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ngspice pre-master-45, Macos ARM64
+          path: release/build
+
   build-win-X64:
     runs-on: windows-latest
+    needs: build-macos-arm64
     steps:
       - name: Flex and Bison
         run: |
@@ -97,16 +154,17 @@ jobs:
           move bin\gui.exe bin\ngspice.exe
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > README.ngspice
-          echo The source code came from the pre-master-45 branch. >> README.ngspice
+          echo "The source code came from the pre-master-45 branch with head revision:" >> README.ngspice
+          echo( >> README.ngspice
+          echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> README.ngspice
+          echo( >> README.ngspice
           echo Install to C:\Spice64\. >> README.ngspice
       - uses: actions/checkout@v4
         with:
           repository: gatk555/test
-      - name: Add DLL
+      - name: Add OSDI files
         shell: cmd
         run: |
-          unzip libomp.zip
-          copy libomp140.x86_64.dll C:\Spice64\bin\vcomp140.dll
           unzip windows_osdi.zip
           copy *.osdi C:\Spice64\lib\ngspice
       - name: Save
@@ -117,6 +175,7 @@ jobs:
 
   build-win_msys:
     runs-on: windows-latest
+    needs: build-macos-arm64
     defaults:
       run:
         shell: msys2 {0}
@@ -144,17 +203,18 @@ jobs:
         run: |
           ./compile_min.sh
           echo Create README.ngspice
-          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > C:\Spice64\README.ngspice
-          echo The source code came from the pre-master-45 branch. >> C:\Spice64\README.ngspice
-          echo Install to C:\Spice64\. >> C:\Spice64\README.ngspice
-      - uses: actions/checkout@v4
-        with:
-          repository: gatk555/test
-      - name: Add DLL
-        shell: cmd
+          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > /c/Spice64/README.ngspice
+          echo 'The source code came from the pre-master-45 branch with head revision:' >> /c/Spice64/README.ngspice
+          echo >> /c/Spice64/README.ngspice
+          echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> /c/Spice64/README.ngspice
+          echo >> /c/Spice64/README.ngspice
+          echo Install to C:\\Spice64\\. >> /c/Spice64/README.ngspice
+      - name: Add DLLs
         run: |
-          unzip libomp.zip
-          copy libomp140.x86_64.dll C:\Spice64\bin\vcomp140.dll
+          cp /ucrt64/bin/libgomp-1.dll /C/Spice64/bin
+          cp /ucrt64/bin/libstdc++-6.dll /C/Spice64/bin
+          cp /ucrt64/bin/libgcc_s_seh-1.dll /C/Spice64/bin
+          cp /ucrt64/bin/libwinpthread-1.dll /C/Spice64/bin
       - name: Save
         uses: actions/upload-artifact@v4
         with:

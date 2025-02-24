@@ -42,7 +42,7 @@ jobs:
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > /usr/local/README.ngspice
           echo 'The source code came from the pre-master-45 branch with head revision:' >> /usr/local/README.ngspice
           echo >> /usr/local/README.ngspice
-          git log -1 --skip=1 >> /usr/local/README.ngspice
+          git log -1 >> /usr/local/README.ngspice
       - name: Save
         if: hashFiles('_pulled_') != ''
         uses: actions/upload-artifact@v4
