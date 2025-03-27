@@ -148,6 +148,8 @@ jobs:
           copy visualc\sharedspice\Release.x64\ngspice.dll c:\Spice64\bin-dll
           copy visualc\sharedspice\Release.x64\ngspice.exp c:\Spice64\bin-dll
           copy visualc\sharedspice\Release.x64\ngspice.lib c:\Spice64\bin-dll
+          md c:\Spice64\include
+          copy src\include\ngspice\sharedspice.h c:\Spice64\include
           c:
           cd \Spice64
           move bin\ngspice.exe bin\ngspice_con.exe
