@@ -134,6 +134,7 @@ jobs:
           msbuild %opt% visualc\xspice\table.vcxproj
           msbuild %opt% visualc\xspice\xtradev.vcxproj
           msbuild %opt% visualc\xspice\xtraevt.vcxproj
+          msbuild %opt% visualc\xspice\tlines.vcxproj
           set cms=codemodels\%plat%\%config%
           md visualc\%cms%
           move visualc\xspice\%cms%\*.cm visualc\%cms%
