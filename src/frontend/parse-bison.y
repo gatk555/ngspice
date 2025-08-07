@@ -9,8 +9,6 @@
   #include <stdio.h>
   #include <stdlib.h>
 
-  # define YYLTYPE struct PPltype
-
   #include "parse.h"
   #include "parse-bison.h"
   #include "parse-bison-y.h"
@@ -26,23 +24,25 @@
        }                                                                 \
      while (0)
 
-  static void PPerror (YYLTYPE *locp, char **line, struct pnode **retval, char const *);
+  static void pperror (YYLTYPE *locp, char **line, struct pnode **retval, char const *);
 
   static char *keepline;
 %}
 
-%name-prefix "PP"
+%define api.prefix {pp}
 
 %defines
 %locations
 %debug
 
-%pure-parser
+%define api.pure
 
 %parse-param {char **line}
 %lex-param   {char **line}
 
 %parse-param {struct pnode **retval}
+
+%define api.location.type {struct PPltype}
 
 %union {
   double num;
@@ -168,7 +168,7 @@ exp:
 
 /* Called by yyparse on error.  */
 static void
-PPerror (YYLTYPE *locp, char **line, struct pnode **retval, char const *s)
+pperror (YYLTYPE *locp, char **line, struct pnode **retval, char const *s)
 {
   NG_IGNORE(locp);
   NG_IGNORE(line);

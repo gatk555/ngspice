@@ -1097,7 +1097,7 @@ if test "x$enable_utf8" = xno; then
     AC_MSG_RESULT([WARNING: UNICOPDE support is disabled, extended ascii is enabled instead])
 fi
 
-AC_PROG_YACC
+AC_CHECK_PROG(YACC, bison, bison)
 AC_PATH_PROG([BISON], [bison])
 AX_PROG_BISON_VERSION([2.7], [],
     [AC_DEFINE([OLD_BISON], [], [Bison is older than 2.7]),

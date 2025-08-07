@@ -10,8 +10,6 @@
   #include <stdio.h>
   #include <stdlib.h>
 
-  # define YYLTYPE struct PTltype
-
   #include "inpptree-parser.h"
   #include "inpptree-parser-y.h"
 
@@ -26,20 +24,22 @@
        }                                                                 \
      while (0)
 
-  static void PTerror (YYLTYPE *locp, char **line, struct INPparseNode **retval, void *ckt, char const *);
+  static void pterror (YYLTYPE *locp, char **line, struct INPparseNode **retval, void *ckt, char const *);
 %}
 
-%name-prefix "PT"
+%define api.prefix {pt}
 
 %defines
 
-%pure-parser
+%define api.pure
 
 %parse-param {char **line}
 %lex-param   {char **line}
 
 %parse-param {struct INPparseNode **retval}
 %parse-param {CKTcircuit *ckt}
+
+%define api.location.type {struct PTltype}
 
 %union {
   double num;
@@ -138,7 +138,7 @@ nonempty_arglist:
 
 /* Called by yyparse on error.  */
 static void
-PTerror (YYLTYPE *locp, char **line, struct INPparseNode **retval, void *ckt, char const *s)
+pterror (YYLTYPE *locp, char **line, struct INPparseNode **retval, void *ckt, char const *s)
 {
   NG_IGNORE(line);
   NG_IGNORE(retval);

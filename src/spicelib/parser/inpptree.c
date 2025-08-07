@@ -21,7 +21,7 @@ Author: 1987 Wayne A. Christopher, U. C. Berkeley CAD Group
 extern bool ft_stricterror;
 
 #ifdef OLD_BISON
-int PTparse(char **line, INPparseNode **p, CKTcircuit *ckt);
+int ptparse(char **line, INPparseNode **p, CKTcircuit *ckt);
 #endif
 
 static INPparseNode *mkcon(double value);
@@ -215,7 +215,7 @@ INPgetTree(char **line, INPparseTree ** pt, CKTcircuit *ckt, INPtables * tab)
     fprintf(stderr,"%s, line = \"%s\"\n", __func__, *line);
 #endif
 
-    rv = PTparse(line, &p, ckt);
+    rv = ptparse(line, &p, ckt);
 
     if (rv || !p || !PTcheck(p, treeline)) {
 
@@ -1400,7 +1400,7 @@ INPparseNode *PT_mksnode(const char *string, void *ckt)
 
 /* The lexical analysis routine. */
 
-int PTlex (YYSTYPE *lvalp, struct PTltype *llocp, char **line)
+int ptlex (PTSTYPE *lvalp, struct PTltype *llocp, char **line)
 {
     double td;
     int err;

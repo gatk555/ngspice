@@ -2,7 +2,7 @@ struct PPltype {
     const char *start, *stop;
 };
 
-extern int PPlex(YYSTYPE *lvalp, struct PPltype *llocp, char **line);
+extern int pplex(PPSTYPE *lvalp, struct PPltype *llocp, char **line);
 
 extern struct pnode *PP_mkunode(int op, struct pnode *arg);
 extern struct pnode *PP_mkfnode(const char *func, struct pnode *arg);

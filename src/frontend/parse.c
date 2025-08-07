@@ -25,7 +25,7 @@ Author: 1985 Wayne A. Christopher, U. C. Berkeley CAD Group
 static bool checkvalid(struct pnode *pn);
 
 #ifdef OLD_BISON
-extern int PPparse(char **, struct pnode **);
+extern int ppparse(char **, struct pnode **);
 #endif
 
 void db_print_pnode_tree(struct pnode *p, char *print);
@@ -34,9 +34,9 @@ struct pnode *ft_getpnames_from_string(const char *sz, bool check)
 {
     struct pnode *pn;
 
-    /* The first argument to PPparse is not const char **, but it does not
+    /* The first argument to ppparse is not const char **, but it does not
      * appear to modify the string that is being parsed */
-    if (PPparse((char **) &sz, &pn) != 0) {
+    if (ppparse((char **) &sz, &pn) != 0) {
         return (struct pnode *) NULL;
     }
 
@@ -765,7 +765,7 @@ void db_print_pnode_tree(struct pnode *p, char *print)
 
 
 
-int PPlex(YYSTYPE *lvalp, struct PPltype *llocp, char **line)
+int pplex(PPSTYPE *lvalp, struct PPltype *llocp, char **line)
 {
     static char *specials = " \t%()-^+*,/|&<>~=";
     char  *sbuf = *line;
