@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm45
+          ref: gh_pm46
       - name: Install Dependencies
         run: |
           brew install make automake bison
@@ -37,7 +37,7 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-45 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-46 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 >> build/README.ngspice
           echo >> build/README.ngspice
@@ -45,7 +45,7 @@ jobs:
       - name: Save X86_64
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-45, Macos X86_64
+          name: Ngspice pre-master-46, Macos X86_64
           path: build
       - name: Clean
         run: |
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm45
+          ref: gh_pm46
       - name: Save SHA for Windows
         id: set-output
         run: |
@@ -93,7 +93,7 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-45 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-46 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 >> build/README.ngspice
           echo >> build/README.ngspice
@@ -101,7 +101,7 @@ jobs:
       - name: Save arm64
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-45, Macos ARM64
+          name: Ngspice pre-master-46, Macos ARM64
           path: release/build
 
   build-win-X64:
@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm45
+          ref: gh_pm46
       - uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
@@ -157,7 +157,7 @@ jobs:
           move bin\gui.exe bin\ngspice.exe
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > README.ngspice
-          echo "The source code came from the pre-master-45 branch with head revision:" >> README.ngspice
+          echo "The source code came from the pre-master-46 branch with head revision:" >> README.ngspice
           echo( >> README.ngspice
           echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> README.ngspice
           echo( >> README.ngspice
@@ -173,7 +173,7 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-45, Windows X86-64
+          name: Ngspice pre-master-46, Windows X86-64
           path: C:\Spice64
 
   build-win_msys:
@@ -201,13 +201,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: gatk555/ngspice
-          ref: gh_pm45
+          ref: gh_pm46
       - name: Build
         run: |
           ./compile_min.sh
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > /c/Spice64/README.ngspice
-          echo 'The source code came from the pre-master-45 branch with head revision:' >> /c/Spice64/README.ngspice
+          echo 'The source code came from the pre-master-46 branch with head revision:' >> /c/Spice64/README.ngspice
           echo >> /c/Spice64/README.ngspice
           echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> /c/Spice64/README.ngspice
           echo >> /c/Spice64/README.ngspice
@@ -221,5 +221,5 @@ jobs:
       - name: Save
         uses: actions/upload-artifact@v4
         with:
-          name: Ngspice pre-master-45, Windows 64-bit with MSYS and UCRT64
+          name: Ngspice pre-master-46, Windows 64-bit with MSYS and UCRT64
           path: C:\Spice64
