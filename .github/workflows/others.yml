@@ -6,10 +6,10 @@ jobs:
   build-macos-x86_64:
     runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: gatk555/ngspice
-          ref: gh_pm46
+          ref: gh_pm47
       - name: Install Dependencies
         run: |
           brew install make automake bison
@@ -37,15 +37,15 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-46 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-47 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 >> build/README.ngspice
           echo >> build/README.ngspice
           echo 'Install to /usr/local.' > build/README.ngspice
       - name: Save X86_64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: Ngspice pre-master-46, Macos X86_64
+          name: Ngspice pre-master-47, Macos X86_64
           path: build
       - name: Clean
         run: |
@@ -59,10 +59,10 @@ jobs:
     outputs:
       HEAD_DESC: ${{ steps.set-output.outputs.HEAD_DESC }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: gatk555/ngspice
-          ref: gh_pm46
+          ref: gh_pm47
       - name: Save SHA for Windows
         id: set-output
         run: |
@@ -93,15 +93,15 @@ jobs:
           done
           echo Create README.ngspice
           echo 'This binary package of ngspice was built at https://github.com/gatk555/ngspice.' > build/README.ngspice
-          echo 'The source code came from the pre-master-46 branch with head revision:' >> build/README.ngspice
+          echo 'The source code came from the pre-master-47 branch with head revision:' >> build/README.ngspice
           echo >> build/README.ngspice
           git log -1 >> build/README.ngspice
           echo >> build/README.ngspice
           echo 'Install to /usr/local.' >> build/README.ngspice
       - name: Save arm64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: Ngspice pre-master-46, Macos ARM64
+          name: Ngspice pre-master-47, Macos ARM64
           path: release/build
 
   build-win-X64:
@@ -114,10 +114,10 @@ jobs:
           cd ..\flex-bison
           curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
           unzip win_flex_bison-2.5.25
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: gatk555/ngspice
-          ref: gh_pm46
+          ref: gh_pm47
       - uses: microsoft/setup-msbuild@v2
       - name: Build
         shell: cmd
@@ -157,12 +157,12 @@ jobs:
           move bin\gui.exe bin\ngspice.exe
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > README.ngspice
-          echo "The source code came from the pre-master-46 branch with head revision:" >> README.ngspice
+          echo "The source code came from the pre-master-47 branch with head revision:" >> README.ngspice
           echo( >> README.ngspice
           echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> README.ngspice
           echo( >> README.ngspice
           echo Install to C:\Spice64\. >> README.ngspice
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: gatk555/test
       - name: Add OSDI files
@@ -171,9 +171,9 @@ jobs:
           unzip windows_osdi.zip
           copy *.osdi C:\Spice64\lib\ngspice
       - name: Save
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: Ngspice pre-master-46, Windows X86-64
+          name: Ngspice pre-master-47, Windows X86-64
           path: C:\Spice64
 
   build-win_msys:
@@ -198,16 +198,16 @@ jobs:
           cd ..\flex-bison
           curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
           unzip win_flex_bison-2.5.25
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: gatk555/ngspice
-          ref: gh_pm46
+          ref: gh_pm47
       - name: Build
         run: |
           ./compile_min.sh
           echo Create README.ngspice
           echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > /c/Spice64/README.ngspice
-          echo 'The source code came from the pre-master-46 branch with head revision:' >> /c/Spice64/README.ngspice
+          echo 'The source code came from the pre-master-47 branch with head revision:' >> /c/Spice64/README.ngspice
           echo >> /c/Spice64/README.ngspice
           echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> /c/Spice64/README.ngspice
           echo >> /c/Spice64/README.ngspice
@@ -219,7 +219,7 @@ jobs:
           cp /ucrt64/bin/libgcc_s_seh-1.dll /C/Spice64/bin
           cp /ucrt64/bin/libwinpthread-1.dll /C/Spice64/bin
       - name: Save
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: Ngspice pre-master-46, Windows 64-bit with MSYS and UCRT64
+          name: Ngspice pre-master-47, Windows 64-bit with MSYS and UCRT64
           path: C:\Spice64
