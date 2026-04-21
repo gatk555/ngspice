@@ -965,12 +965,15 @@ ngSpice_Init(SendChar* printfcn, SendStat* statusfcn, ControlledExit* ngspiceexi
         struct passwd *pw;
         pw = getpwuid(getuid());
 
-        s = tprintf("%s" DIR_PATHSEP "%s", pw->pw_dir, INITSTR);
+        if (pw) {
+            s = tprintf("%s" DIR_PATHSEP "%s", pw->pw_dir, INITSTR);
 
-        if (access(s, 0) == 0)
-            inp_source(s);
+            if (access(s, 0) == 0) {
+                inp_source(s);
+            }
 
-        tfree(s);
+            tfree(s);
+        }
     }
 #else /* ~ HAVE_PWD_H */
     /* load user's initialisation file
