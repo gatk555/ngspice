@@ -799,8 +799,8 @@ DCpss(CKTcircuit *ckt,
             gf_history [shooting_cycle_counter] = ckt->CKTguessedFreq ;
             shooting_cycle_counter++ ;
 
-            fprintf (stderr, "Updated guessed frequency: %1.10lg .\n", ckt->CKTguessedFreq) ;
-            fprintf (stderr, "Next shooting evaluation time is %1.10g and current time is %1.10g.\n",
+            fprintf (stdout, "Updated guessed frequency: %1.10lg .\n", ckt->CKTguessedFreq) ;
+            fprintf (stdout, "Next shooting evaluation time is %1.10g and current time is %1.10g.\n",
                      time_temp + 1 / ckt->CKTguessedFreq, ckt->CKTtime) ;
 
             /* Restore maximum and minimum error for next search */
