@@ -614,6 +614,7 @@ SMPluFac (SMPmatrix *Matrix, double PivTol, double Gmin)
                 fprintf (stderr, "Error (ReFactor): KLUnumeric object is NULL. A problem occurred\n") ;
                 return 1 ;
             }
+            return 1;
         } else {
             return 0 ;
         }
@@ -682,6 +683,7 @@ SMPluFacKLUforCIDER (SMPmatrix *Matrix)
                 fprintf (stderr, "Error (ReFactor for CIDER): KLUnumeric object is NULL. A problem occurred\n") ;
                 return 1 ;
             }
+            return 1;
         } else {
             return 0 ;
         }
@@ -871,6 +873,7 @@ SMPreorderKLUforCIDER (SMPmatrix *Matrix)
                 fprintf (stderr, "Error (Factor for CIDER): KLUsymbolic object is NULL. A problem occurred\n") ;
                 return 1 ;
             }
+            return 1;
         } else {
             return 0 ;
         }
