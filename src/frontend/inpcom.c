@@ -9923,7 +9923,7 @@ static void inp_meas_control(struct card* card)
 {
     int is_control = 0;
     static int replaceno = 1;
-    struct card* prevcard;
+    struct card* prevcard = NULL;
 
     for (; card; prevcard = card, card = card->nextcard) {
 
