@@ -112,13 +112,13 @@ DCpss(CKTcircuit *ckt,
 
 
     /* Print some useful information */
-    fprintf (stderr, "Periodic Steady State Analysis Started\n\n") ;
-    fprintf (stderr, "PSS Guessed Frequency %g\n", ckt->CKTguessedFreq) ;
-    fprintf (stderr, "PSS Points %ld\n", ckt->CKTpsspoints) ;
-    fprintf (stderr, "PSS Harmonics number %d\n", ckt->CKTharms) ;
-    fprintf (stderr, "PSS Steady Coefficient %g\n", ckt->CKTsteady_coeff) ;
-    fprintf (stderr, "PSS sc_iter %d\n", ckt->CKTsc_iter) ;
-    fprintf (stderr, "PSS Stabilization Time %g\n", ckt->CKTstabTime) ;
+    fprintf (stdout, "Periodic Steady State Analysis Started\n\n") ;
+    fprintf (stdout, "PSS Guessed Frequency %g\n", ckt->CKTguessedFreq) ;
+    fprintf (stdout, "PSS Points %ld\n", ckt->CKTpsspoints) ;
+    fprintf (stdout, "PSS Harmonics number %d\n", ckt->CKTharms) ;
+    fprintf (stdout, "PSS Steady Coefficient %g\n", ckt->CKTsteady_coeff) ;
+    fprintf (stdout, "PSS sc_iter %d\n", ckt->CKTsc_iter) ;
+    fprintf (stdout, "PSS Stabilization Time %g\n", ckt->CKTstabTime) ;
 
 
     oscnNode = job->PSSoscNode->number ;
@@ -342,7 +342,7 @@ DCpss(CKTcircuit *ckt,
                                            666, NULL, 666,
                                            &(job->PSSplot_td));
         if(error) {
-            fprintf(stderr, "Couldn't relink rawfile\n");
+            fprintf(stderr, "Error: Couldn't relink rawfile\n");
             return error;
         }
         /* end saj*/
@@ -394,7 +394,7 @@ DCpss(CKTcircuit *ckt,
 
 #ifdef STEPDEBUG
     fprintf (stderr, "Delta %g accepted at time %g (finaltime: %g)\n", ckt->CKTdelta, ckt->CKTtime, ckt->CKTfinalTime) ;
-    fflush(stdout);
+    fflush(stderr);
 #endif /* STEPDEBUG */
     ckt->CKTstat->STATaccepted ++;
     ckt->CKTbreak = 0;
@@ -613,8 +613,8 @@ DCpss(CKTcircuit *ckt,
             nextBreak = offset + (i + 1) * interval ;
             CKTsetBreak (ckt, nextBreak) ;
         } else {
-            fprintf (stderr, "Strange behavior\n\n") ;
-            fprintf (stderr, "CKTtime: %g\ntime_temp: %g\n\n", ckt->CKTtime, time_temp) ;
+            fprintf (stderr, "Error: Strange behavior\n") ;
+            fprintf (stderr, "    CKTtime: %g\ntime_temp: %g\n\n", ckt->CKTtime, time_temp) ;
         }
 
         /* *************************************** */
@@ -672,7 +672,7 @@ DCpss(CKTcircuit *ckt,
                 fprintf (stdout, "In shooting...\n") ;
             }
 
-//#ifdef STEPDEBUG
+#ifdef PSSDEBUG
             /* For debugging purpose */
             fprintf (stderr, "\n----------------\n") ;
             fprintf (stderr, "Shooting cycle iteration number: %3d ||", shooting_cycle_counter) ;
@@ -684,7 +684,7 @@ DCpss(CKTcircuit *ckt,
 
 //            fprintf (stderr, "Print of dynamically consistent nodes voltages or branches currents:\n") ;
             /* --------------------- */
-//#endif
+#endif
 
             for (i = 0, node = ckt->CKTnodes->next ; node ; i++, node = node->next)
             {
@@ -828,7 +828,7 @@ DCpss(CKTcircuit *ckt,
                 RHS_min [i] = HUGE_VAL ;
             }
 
-            fprintf (stderr, "----------------\n\n") ;
+            fprintf (stdout, "----------------\n\n") ;
 
 shootingexit:
             /* Shooting Exit Condition */
@@ -848,7 +848,7 @@ shootingexit:
                 for (i = 0 ; i < shooting_cycle_counter ; i++)
                 {
                     /* Print some statistics */
-                    fprintf (stderr, "%-3d -> FE: %-15.10g || RR: %15.10g", i, gf_history [i], rr_history [i]) ;
+                    fprintf (stdout, "%-3d -> FE: %-15.10g || RR: %15.10g", i, gf_history [i], rr_history [i]) ;
 
                     /* Take the minimum residual iteration */
                     if (minimum > predsum_history [i])
@@ -856,7 +856,7 @@ shootingexit:
                         minimum = predsum_history [i] ;
                         k = i ;
                     }
-                    fprintf (stderr, " || predsum/dynamic_test: %15.10g || minimum: %15.10g\n", predsum_history [i], minimum) ;
+                    fprintf (stdout, " || predsum/dynamic_test: %15.10g || minimum: %15.10g\n", predsum_history [i], minimum) ;
                 }
 
                 if (excessive_err_nodes == 0)  /* SHOOTING has converged  */
@@ -881,9 +881,9 @@ shootingexit:
                 CKTsetBreak (ckt, time_temp + (1 / ckt->CKTguessedFreq) * ((double)pss_points_cycle / (double)ckt->CKTpsspoints)) ;
 
                 if (excessive_err_nodes == 0)
-                    fprintf (stderr, "\nConvergence reached. Final circuit time is %1.10g seconds (iteration n° %d) and predicted fundamental frequency is %15.10g Hz\n", ckt->CKTtime, shooting_cycle_counter - 1, ckt->CKTguessedFreq) ;
+                    fprintf (stdout, "\nConvergence reached. Final circuit time is %1.10g seconds (iteration n° %d) and predicted fundamental frequency is %15.10g Hz\n", ckt->CKTtime, shooting_cycle_counter - 1, ckt->CKTguessedFreq) ;
                 else
-                    fprintf (stderr, "\nConvergence not reached. However the most near convergence iteration has predicted (iteration %d) a fundamental frequency of %15.10g Hz\n", k, ckt->CKTguessedFreq) ;
+                    fprintf (stdout, "\nConvergence not reached. However the most near convergence iteration has predicted (iteration %d) a fundamental frequency of %15.10g Hz\n", k, ckt->CKTguessedFreq) ;
 
 #ifdef PSSDEBUG
                 fprintf (stderr, "time_temp %g\n", time_temp) ;
@@ -987,8 +987,8 @@ shootingexit:
             if (pssfreqs [position] != ckt->CKTguessedFreq)
             {
                 ckt->CKTguessedFreq = pssfreqs [position] ;
-                fprintf (stderr, "The predicted fundamental frequency is incorrect.\nRelaunching the analysis...\n\n") ;
-                fprintf (stderr, "The new guessed fundamental frequency is: %.6g\n\n", ckt->CKTguessedFreq) ;
+                fprintf (stdout, "The predicted fundamental frequency is incorrect.\nRelaunching the analysis...\n\n") ;
+                fprintf (stdout, "The new guessed fundamental frequency is: %.6g\n\n", ckt->CKTguessedFreq) ;
                 DCpss (ckt, 1) ;
             }
             /****************************/
@@ -1108,7 +1108,7 @@ resume:
         ckt->CKTsaveDelta = ckt->CKTdelta;
         ckt->CKTdelta = ckt->CKTbreaks[0] - ckt->CKTtime;
         /* fprintf (stderr, "delta cut to %g to hit breakpoint\n" ,ckt->CKTdelta) ; */
-        fflush(stdout);
+        fflush(stderr);
         ckt->CKTbreak = 1; /* why? the current pt. is not a bkpt. */
     }
      /* Try to equalise the last two time steps before the breakpoint,
@@ -1310,7 +1310,7 @@ resume:
             ckt->CKTdelta = ckt->CKTdelta/8;
 #ifdef STEPDEBUG
             fprintf (stderr, "delta cut to %g for non-convergence\n", ckt->CKTdelta) ;
-            fflush(stdout);
+            fflush(stderr);
 #endif
             if(firsttime) {
                 ckt->CKTmode = (ckt->CKTmode&MODEUIC) | MODETRAN | MODEINITTRAN;
@@ -1363,22 +1363,10 @@ resume:
                 }
                 /* time point OK  - 630 */
                 ckt->CKTdelta = newdelta;
-#ifdef NDEV
-                if (!ft_norefprint) {
-                    /* show a time process indicator, by Gong Ding, gdiso@ustc.edu */
-                    if (ckt->CKTtime / ckt->CKTfinalTime * 100 < 10.0)
-                        fprintf(stderr, "%%%3.2lf\b\b\b\b\b", ckt->CKTtime / ckt->CKTfinalTime * 100);
-                    else  if (ckt->CKTtime / ckt->CKTfinalTime * 100 < 100.0)
-                        fprintf(stderr, "%%%4.2lf\b\b\b\b\b\b", ckt->CKTtime / ckt->CKTfinalTime * 100);
-                    else
-                        fprintf(stderr, "%%%5.2lf\b\b\b\b\b\b\b", ckt->CKTtime / ckt->CKTfinalTime * 100);
-                    fflush(stdout);
-                }
-#endif
 
 #ifdef STEPDEBUG
                 fprintf (stderr, "delta set to truncation error result: %g. Point accepted at CKTtime: %g\n", ckt->CKTdelta, ckt->CKTtime) ;
-                fflush(stdout);
+                fflush(stderr);
 #endif
 
 
