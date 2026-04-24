@@ -225,11 +225,11 @@ ISRCload(GENmodel *inModel, CKTcircuit *ckt)
                            && here->ISRCcoeffs[4]
                            ? here->ISRCcoeffs[4] : (500./ckt->CKTfinalTime);
                         TD = here->ISRCfunctionOrder > 5
-                            ? here->ISRCcoeffs[5] : 0;
-                        PHASEM = here->ISRCfunctionOrder > 5
                             ? here->ISRCcoeffs[5] : 0.0;
-                        PHASEC = here->ISRCfunctionOrder > 6
+                        PHASEM = here->ISRCfunctionOrder > 6
                             ? here->ISRCcoeffs[6] : 0.0;
+                        PHASEC = here->ISRCfunctionOrder > 7
+                            ? here->ISRCcoeffs[7] : 0.0;
 
                         /* limit the modulation index */
                         if (MDI > FC / FM) {
@@ -251,10 +251,16 @@ ISRCload(GENmodel *inModel, CKTcircuit *ckt)
                         phasec = PHASEC * M_PI / 180.0;
                         phasem = PHASEM * M_PI / 180.0;
 
-                        /* compute waveform value */
-                        value = VO + VA *
-                            sin((2.0 * M_PI * FC * time + phasec) +
-                            MDI * sin(2.0 * M_PI * FM * time + phasem));
+                        time -= TD;
+                        if (time <= 0) {
+                            value = 0;
+                        }
+                        else {
+                            /* compute waveform value */
+                            value = VO + VA *
+                                sin((2.0 * M_PI * FC * time + phasec) +
+                                    MDI * sin(2.0 * M_PI * FM * time + phasem));
+                        }
                     }
                     break;
 
