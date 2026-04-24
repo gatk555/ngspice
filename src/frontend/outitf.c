@@ -111,16 +111,40 @@ OUTpBeginPlot(CKTcircuit *circuitPtr, JOB *analysisPtr,
               int numNames, IFuid *dataNames, int dataType, runDesc **plotPtr)
 {
     char *name;
+    int ret, n;
+    runDesc* plot;
 
     if (ft_curckt->ci_ckt == circuitPtr)
         name = ft_curckt->ci_name;
     else
         name = "circuit name";
 
-    return (beginPlot(analysisPtr, circuitPtr, name,
+    ret = beginPlot(analysisPtr, circuitPtr, name,
                       analName, refName, refType, numNames,
                       dataNames, dataType, FALSE,
-                      plotPtr));
+                      plotPtr);
+    plot = *plotPtr;
+    n = plot->numData;
+
+#ifndef __APPLE__
+    if (!cp_getvar("no_mem_check", CP_BOOL, NULL, 0)) {
+        /* Estimate the required memory */
+        int timesteps = vlength2delta(0);
+        size_t memrequ = (size_t)n * timesteps * sizeof(double);
+        size_t memavail = getAvailableMemorySize();
+
+        if (memrequ > memavail) {
+            fprintf(stderr, "\nError: memory required (%zu Bytes), made of\n"
+                "       %d nodes and approximately %d time steps,\n"
+                "       is more than the memory available (%zu Bytes)!\n",
+                memrequ, n, timesteps, memavail);
+            fprintf(stderr, "Setting the output memory is not possible.\n");
+            controlled_exit(1);
+        }
+    }
+#endif
+
+    return ret;
 }
 
 
@@ -555,25 +579,6 @@ static void
 OUTpD_memory(runDesc *run, IFvalue *refValue, IFvalue *valuePtr)
 {
     int i, n = run->numData;
-
-
-#ifndef __APPLE__
-    if (!cp_getvar("no_mem_check", CP_BOOL, NULL, 0)) {
-        /* Estimate the required memory */
-        int timesteps = vlength2delta(0);
-        size_t memrequ = (size_t)n * timesteps * sizeof(double);
-        size_t memavail = getAvailableMemorySize();
-
-        if (memrequ > memavail) {
-            fprintf(stderr, "\nError: memory required (%zu Bytes), made of\n"
-                "       %d nodes and approximately %d time steps,\n"
-                "       is more than the memory available (%zu Bytes)!\n",
-                memrequ, n, timesteps, memavail);
-            fprintf(stderr, "Setting the output memory is not possible.\n");
-            controlled_exit(1);
-        }
-    }
-#endif
 
     for (i = 0; i < n; i++) {
 
