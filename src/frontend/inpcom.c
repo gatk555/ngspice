@@ -1491,6 +1491,7 @@ static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name
             struct card* newcard;
 
             struct compat tmpcomp;
+            memset(&tmpcomp, 0, sizeof(tmpcomp));
             bool compset = FALSE;
 
             /* special treatment of special .inc commands */
