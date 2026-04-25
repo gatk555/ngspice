@@ -203,7 +203,7 @@ NOISEan(CKTcircuit* ckt, int restart)
                     ckt->CKTdcMaxIter);
 
                 if (error) {
-                    fprintf(stdout, "\nNOISE operating point failed -\n");
+                    fprintf(stderr, "\nError: NOISE operating point failed -\n");
                     CKTncDump(ckt);
                     return(error);
                 }
