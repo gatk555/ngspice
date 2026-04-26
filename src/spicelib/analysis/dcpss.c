@@ -24,6 +24,8 @@
 /* gtri - end - wbk - Add headers */
 #endif
 
+extern char* eng(double value, int digits, int numeric);
+
 #define INIT_STATS() \
 do { \
     startTime = SPfrontEnd->IFseconds();        \
@@ -625,6 +627,8 @@ DCpss(CKTcircuit *ckt,
         /* If evolution is near shooting... */
         if ((AlmostEqualUlps (ckt->CKTtime, time_temp + 1 / ckt->CKTguessedFreq, 10)) || (ckt->CKTtime > time_temp + 1 / ckt->CKTguessedFreq))
         {
+            char* freq = NULL;
+
             int excessive_err_nodes = 0 ;
 
             /* Calculation of error norms of RHS solution of every accepted nextTime */
@@ -798,8 +802,9 @@ DCpss(CKTcircuit *ckt,
             rr_history [shooting_cycle_counter] = err ;
             gf_history [shooting_cycle_counter] = ckt->CKTguessedFreq ;
             shooting_cycle_counter++ ;
-
-            fprintf (stdout, "Updated guessed frequency: %1.10lg .\n", ckt->CKTguessedFreq) ;
+            freq = eng(ckt->CKTguessedFreq, 10, 1);
+            fprintf (stdout, "Updated guessed frequency: %s Hz.\n", freq) ;
+            tfree(freq);
             fprintf (stdout, "Next shooting evaluation time is %1.10g and current time is %1.10g.\n",
                      time_temp + 1 / ckt->CKTguessedFreq, ckt->CKTtime) ;
 
@@ -835,8 +840,7 @@ shootingexit:
             if ((shooting_cycle_counter > ckt->CKTsc_iter) || (excessive_err_nodes == 0))
             {
                 int k ;
-                double minimum ;
-
+                double minimum;
                 pss_state = PSS ;
 
 #ifdef PSSDEBUG
@@ -880,10 +884,12 @@ shootingexit:
                 pss_points_cycle++ ;
                 CKTsetBreak (ckt, time_temp + (1 / ckt->CKTguessedFreq) * ((double)pss_points_cycle / (double)ckt->CKTpsspoints)) ;
 
+                freq = eng(ckt->CKTguessedFreq, 10, 1); /* engineering notation */
                 if (excessive_err_nodes == 0)
-                    fprintf (stdout, "\nConvergence reached. Final circuit time is %1.10g seconds (iteration n° %d) and predicted fundamental frequency is %15.10g Hz\n", ckt->CKTtime, shooting_cycle_counter - 1, ckt->CKTguessedFreq) ;
+                    fprintf (stdout, "\nConvergence reached. Final circuit time is %1.10g seconds (iteration n° %d) and predicted fundamental frequency is %s Hz\n", ckt->CKTtime, shooting_cycle_counter - 1, freq) ;
                 else
-                    fprintf (stdout, "\nConvergence not reached. However the most near convergence iteration has predicted (iteration %d) a fundamental frequency of %15.10g Hz\n", k, ckt->CKTguessedFreq) ;
+                    fprintf (stdout, "\nConvergence not reached. However the most near convergence iteration has predicted (iteration %d) a fundamental frequency of %s Hz\n", k, freq) ;
+                tfree(freq);
 
 #ifdef PSSDEBUG
                 fprintf (stderr, "time_temp %g\n", time_temp) ;
