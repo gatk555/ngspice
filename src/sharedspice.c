@@ -1061,6 +1061,8 @@ ngSpice_Init(SendChar* printfcn, SendStat* statusfcn, ControlledExit* ngspiceexi
     if (thisproc) {
         if( ciprefix("eeschema", thisproc))
             newcompat.ki = TRUE;
+        else
+            newcompat.ki = FALSE;
         tfree(thisproc);
     }
 
