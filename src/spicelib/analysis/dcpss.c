@@ -24,7 +24,7 @@
 /* gtri - end - wbk - Add headers */
 #endif
 
-extern char* eng(double value, int digits, int numeric);
+extern char* eng(double value, int digits, bool numeric, bool bytes);
 
 #define INIT_STATS() \
 do { \
@@ -802,7 +802,7 @@ DCpss(CKTcircuit *ckt,
             rr_history [shooting_cycle_counter] = err ;
             gf_history [shooting_cycle_counter] = ckt->CKTguessedFreq ;
             shooting_cycle_counter++ ;
-            freq = eng(ckt->CKTguessedFreq, 10, 1);
+            freq = eng(ckt->CKTguessedFreq, 10, TRUE, FALSE);
             fprintf (stdout, "Updated guessed frequency: %s Hz.\n", freq) ;
             tfree(freq);
             fprintf (stdout, "Next shooting evaluation time is %1.10g and current time is %1.10g.\n",
@@ -884,7 +884,7 @@ shootingexit:
                 pss_points_cycle++ ;
                 CKTsetBreak (ckt, time_temp + (1 / ckt->CKTguessedFreq) * ((double)pss_points_cycle / (double)ckt->CKTpsspoints)) ;
 
-                freq = eng(ckt->CKTguessedFreq, 10, 1); /* engineering notation */
+                freq = eng(ckt->CKTguessedFreq, 10, TRUE, FALSE); /* engineering notation */
                 if (excessive_err_nodes == 0)
                     fprintf (stdout, "\nConvergence reached. Final circuit time is %1.10g seconds (iteration n° %d) and predicted fundamental frequency is %s Hz\n", ckt->CKTtime, shooting_cycle_counter - 1, freq) ;
                 else
