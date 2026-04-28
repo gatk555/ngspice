@@ -38,6 +38,8 @@ extern int EVTsetup_plot(CKTcircuit* ckt, char* plotname);
 extern IFsimulator SIMinfo;
 extern char Spice_Build_Date[];
 
+extern char* eng(double value, int digits, bool numeric, bool bytes);
+
 extern unsigned long long getMemorySize(void);
 extern unsigned long long getPeakRSS(void);
 extern unsigned long long getCurrentRSS(void);
@@ -126,23 +128,36 @@ OUTpBeginPlot(CKTcircuit *circuitPtr, JOB *analysisPtr,
     plot = *plotPtr;
     n = plot->numData;
 
-#ifndef __APPLE__
     if (!cp_getvar("no_mem_check", CP_BOOL, NULL, 0)) {
         /* Estimate the required memory */
-        int timesteps = vlength2delta(0);
+        int timesteps = ft_curckt->ci_ckt->CKTtimeListSize;
         size_t memrequ = (size_t)n * timesteps * sizeof(double);
         size_t memavail = getAvailableMemorySize();
-
+        double dmemrequ = (double)memrequ;
+        double dmemavail = (double)memavail;
+        char *cmemrequ = eng(dmemrequ, 9, FALSE, TRUE);
+        char *cmemavail = eng(dmemavail, 9, FALSE, TRUE);
         if (memrequ > memavail) {
-            fprintf(stderr, "\nError: memory required (%zu Bytes), made of\n"
+#ifdef _WIN32
+            fprintf(stderr, "\nError: memory required (%sB), made of\n"
                 "       %d nodes and approximately %d time steps,\n"
-                "       is more than the memory available (%zu Bytes)!\n",
-                memrequ, n, timesteps, memavail);
+                "       is more than the memory available (%sB)!\n",
+                cmemrequ, n, timesteps, cmemavail);
             fprintf(stderr, "Setting the output memory is not possible.\n");
+            tfree(cmemrequ);
+            tfree(cmemavail);
             controlled_exit(1);
+#else
+            fprintf(stderr, "\nWarning: memory required (%sB), made of\n"
+                "       %d nodes and approximately %d time steps,\n"
+                "       is more than the DRAM memory available (%sB)!\n",
+                cmemrequ, n, timesteps, cmemavail);
+            fprintf(stderr, "Swapping data to SSD may slow down the simulation.\n");
+            tfree(cmemrequ);
+            tfree(cmemavail);
+#endif
         }
     }
-#endif
 
     return ret;
 }
