@@ -130,31 +130,32 @@ OUTpBeginPlot(CKTcircuit *circuitPtr, JOB *analysisPtr,
 
     if (!cp_getvar("no_mem_check", CP_BOOL, NULL, 0)) {
         /* Estimate the required memory */
-        int timesteps = ft_curckt->ci_ckt->CKTtimeListSize;
-        size_t memrequ = (size_t)n * timesteps * sizeof(double);
-        size_t memavail = getAvailableMemorySize();
-        double dmemrequ = (double)memrequ;
-        double dmemavail = (double)memavail;
-        char *cmemrequ = eng(dmemrequ, 9, FALSE, TRUE);
-        char *cmemavail = eng(dmemavail, 9, FALSE, TRUE);
-        if (memrequ > memavail) {
+        double timesteps = ft_curckt->ci_ckt->CKTfinalTime / ft_curckt->ci_ckt->CKTstep;
+        double dmemrequ = timesteps * (double)n * sizeof(double);
+        double dmemavail = (double)getAvailableMemorySize();
+        char *cmemrequ = eng(dmemrequ, 6, FALSE, TRUE);
+        char *cmemavail = eng(dmemavail, 6, FALSE, TRUE);
+        char *ctimesteps = eng(timesteps, 6, TRUE, FALSE);
+        if (dmemrequ > dmemavail) {
 #ifdef _WIN32
             fprintf(stderr, "\nError: memory required (%sB), made of\n"
-                "       %d nodes and approximately %d time steps,\n"
+                "       %d nodes and approximately %s time steps,\n"
                 "       is more than the memory available (%sB)!\n",
-                cmemrequ, n, timesteps, cmemavail);
+                cmemrequ, n,ctimesteps, cmemavail);
             fprintf(stderr, "Setting the output memory is not possible.\n");
             tfree(cmemrequ);
             tfree(cmemavail);
+            tfree(ctimesteps);
             controlled_exit(1);
 #else
             fprintf(stderr, "\nWarning: memory required (%sB), made of\n"
-                "       %d nodes and approximately %d time steps,\n"
+                "       %d nodes and approximately %s time steps,\n"
                 "       is more than the DRAM memory available (%sB)!\n",
-                cmemrequ, n, timesteps, cmemavail);
-            fprintf(stderr, "Swapping data to SSD may slow down the simulation.\n");
+                cmemrequ, n, ctimesteps, cmemavail);
+            fprintf(stderr, "       Swapping data to SSD may slow down the simulation.\n");
             tfree(cmemrequ);
             tfree(cmemavail);
+            tfree(ctimesteps);
 #endif
         }
     }
