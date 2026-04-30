@@ -27,3 +27,6 @@ compile_macos_clang_M2.sh has been enhanced by adding
 to CFLAGS and
 -L/opt/homebrew/opt/libsndfile/lib -L/opt/homebrew/opt/libsamplerate/lib
 to LDFLAGS
+
+Linux Ubuntu 24.04 has the libraries libsndfile0 and libsamplerate0 available automatically.
+You may need to install (with apt) the development header files libsndfile0-dev and libsamplerate0-dev.
