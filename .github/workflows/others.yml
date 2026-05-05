@@ -13,7 +13,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew install make automake bison
-          brew install libxaw
+          brew install libxaw libsndfile libsamplerate
           # compile_macos_gcc.sh expects this path.  Kludge it.
           sudo mkdir -p /opt/X11/include
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2
@@ -69,7 +69,7 @@ jobs:
           echo "HEAD_DESC=\"`git log -1 --pretty=oneline`\"" >> "$GITHUB_OUTPUT"
       - name: Install Dependencies
         run: |
-          brew install automake libtool ncurses bison libxaw
+          brew install automake libtool ncurses bison libxaw libsndfile libsamplerate
           # compile_macos_gcc.sh expects this path.  Kludge it.
           sudo mkdir -p /opt/X11/include
           sudo ln -s /usr/local/include/freetype2 /opt/X11/include/freetype2

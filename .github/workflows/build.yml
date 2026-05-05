@@ -27,7 +27,7 @@ jobs:
         if: hashFiles('_pulled_') != ''
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git make bison flex libtool autoconf automake libx11-dev libxaw7-dev libreadline-dev libxmu6 libxft2 libxrender1 libfreetype6 libfontconfig
+          sudo apt-get install -y build-essential git make bison flex libtool autoconf automake libx11-dev libxaw7-dev libreadline-dev libxmu6 libxft2 libxrender1 libfreetype6 libfontconfig libsndfile1-dev libsamplerate0-dev
       - name: Clean /usr/local
         if: hashFiles('_pulled_') != ''
         run: |
