@@ -79,7 +79,7 @@ jobs:
           ./autogen.sh
           mkdir release
           cd release
-          ../configure  --disable-openmp --with-x --enable-cider --with-readline=/opt/homebrew/opt/readline CC=clang CFLAGS="-m64 -O2 -I/opt/X11/include/freetype2 -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/ncurses/include" LDFLAGS="-m64 -L/opt/homebrew/opt/readline/lib -L/usr/local/lib"
+          ../configure  --disable-openmp --with-x --enable-cider --with-readline=/opt/homebrew/opt/readline CC=clang CFLAGS="-m64 -O2 -I/opt/X11/include/freetype2 -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/ncurses/include -I/opt/homebrew/opt/libsndfile/include -I/opt/homebrew/opt/libsamplerate/include" LDFLAGS="-m64 -L/opt/homebrew/opt/readline/lib  -L/opt/homebrew/opt/libsndfile/lib -L/opt/homebrew/opt/libsamplerate/lib -L/usr/local/lib"
           make -j3
           if [ ! -f src/ngspice ]; then false; fi
       - name: Install arm64
@@ -104,78 +104,6 @@ jobs:
           name: Ngspice pre-master-47, Macos ARM64
           path: release/build
 
-  build-win-X64:
-    runs-on: windows-latest
-    needs: build-macos-arm64
-    steps:
-      - name: Flex and Bison
-        run: |
-          md ..\flex-bison
-          cd ..\flex-bison
-          curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
-          unzip win_flex_bison-2.5.25
-      - uses: actions/checkout@v6
-        with:
-          repository: gatk555/ngspice
-          ref: gh_pm47
-      - uses: microsoft/setup-msbuild@v2
-      - name: Build
-        shell: cmd
-        run: |
-          set config=Release
-          set plat=x64
-          set suffix=64
-          set opt=-property:Configuration=%config% -property:Platform=%plat%
-          msbuild %opt% visualc\xspice\cmpp\cmpp.vcxproj
-          msbuild %opt% visualc\xspice\cmpp\cmpp.vcxproj
-          msbuild %opt% visualc\xspice\analog.vcxproj
-          msbuild %opt% visualc\xspice\digital.vcxproj
-          msbuild %opt% visualc\xspice\spice2poly.vcxproj
-          msbuild %opt% visualc\xspice\table.vcxproj
-          msbuild %opt% visualc\xspice\xtradev.vcxproj
-          msbuild %opt% visualc\xspice\xtraevt.vcxproj
-          msbuild %opt% visualc\xspice\tlines.vcxproj
-          set cms=codemodels\%plat%\%config%
-          md visualc\%cms%
-          move visualc\xspice\%cms%\*.cm visualc\%cms%
-          msbuild %opt% visualc\KLU/KLU_COMPLEX.vcxproj
-          msbuild %opt% visualc\vngspice.vcxproj
-          msbuild %opt% visualc\sharedspice.vcxproj
-          set config=console_release
-          set opt=-property:Configuration=%config% -property:Platform=%plat%
-          msbuild %opt% visualc\vngspice.vcxproj
-          copy visualc\vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
-          md c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.dll c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.exp c:\Spice64\bin-dll
-          copy visualc\sharedspice\Release.x64\ngspice.lib c:\Spice64\bin-dll
-          md c:\Spice64\include
-          copy src\include\ngspice\sharedspice.h c:\Spice64\include
-          c:
-          cd \Spice64
-          move bin\ngspice.exe bin\ngspice_con.exe
-          move bin\gui.exe bin\ngspice.exe
-          echo Create README.ngspice
-          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > README.ngspice
-          echo "The source code came from the pre-master-47 branch with head revision:" >> README.ngspice
-          echo( >> README.ngspice
-          echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> README.ngspice
-          echo( >> README.ngspice
-          echo Install to C:\Spice64\. >> README.ngspice
-      - uses: actions/checkout@v6
-        with:
-          repository: gatk555/test
-      - name: Add OSDI files
-        shell: cmd
-        run: |
-          unzip windows_osdi.zip
-          copy *.osdi C:\Spice64\lib\ngspice
-      - name: Save
-        uses: actions/upload-artifact@v6
-        with:
-          name: Ngspice pre-master-47, Windows X86-64
-          path: C:\Spice64
-
   build-win_msys:
     runs-on: windows-latest
     needs: build-macos-arm64
@@ -190,6 +118,8 @@ jobs:
           install: >
             base-devel
             mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-libsndfile
+            mingw-w64-ucrt-x86_64-libsamplerate
             autotools
       - name: Flex and Bison
         shell: cmd
