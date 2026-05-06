@@ -104,6 +104,89 @@ jobs:
           name: Ngspice pre-master-47, Macos ARM64
           path: release/build
 
+  build-win-X64:
+    runs-on: windows-latest
+    needs: build-macos-arm64
+    steps:
+      - name: Flex and Bison
+        run: |
+          md ..\flex-bison
+          cd ..\flex-bison
+          curl.exe -L -O "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
+          unzip win_flex_bison-2.5.25
+      - name: Soundfiles
+        shell: cmd
+        run: |
+          cd ..
+          curl.exe -L -O "https://github.com/libsndfile/libsndfile/releases/download/1.2.2/libsndfile-1.2.2-win64.zip"
+          unzip libsndfile-1.2.2-win64.zip
+          rename libsndfile-1.2.2-win64 libsndfile
+          curl.exe -L -O "https://github.com/libsndfile/libsamplerate/releases/download/0.2.2/libsamplerate-0.2.2-win64.zip"
+          unzip libsamplerate-0.2.2-win64.zip
+          rename libsamplerate-0.2.2-win64 libsamplerate
+      - uses: actions/checkout@v6
+        with:
+          repository: gatk555/ngspice
+          ref: gh_pm47
+      - uses: microsoft/setup-msbuild@v3
+      - name: Build
+        shell: cmd
+        run: |
+          set config=Release
+          set plat=x64
+          set suffix=64
+          set opt=-property:Configuration=%config% -property:Platform=%plat%
+          msbuild %opt% visualc\xspice\cmpp\cmpp.vcxproj
+          msbuild %opt% visualc\xspice\cmpp\cmpp.vcxproj
+          msbuild %opt% visualc\xspice\analog.vcxproj
+          msbuild %opt% visualc\xspice\digital.vcxproj
+          msbuild %opt% visualc\xspice\spice2poly.vcxproj
+          msbuild %opt% visualc\xspice\table.vcxproj
+          msbuild %opt% visualc\xspice\xtradev.vcxproj
+          msbuild %opt% visualc\xspice\xtraevt.vcxproj
+          msbuild %opt% visualc\xspice\tlines.vcxproj
+          set cms=codemodels\%plat%\%config%
+          md visualc\%cms%
+          move visualc\xspice\%cms%\*.cm visualc\%cms%
+          msbuild %opt% visualc\KLU/KLU_COMPLEX.vcxproj
+          msbuild %opt% visualc\vngspice.vcxproj
+          msbuild %opt% visualc\sharedspice.vcxproj
+          set config=console_release
+          set opt=-property:Configuration=%config% -property:Platform=%plat%
+          msbuild %opt% visualc\vngspice.vcxproj
+          copy visualc\vngspice\Release.x64\ngspice.exe C:\Spice64\bin\gui.exe
+          md c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.dll c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.exp c:\Spice64\bin-dll
+          copy visualc\sharedspice\Release.x64\ngspice.lib c:\Spice64\bin-dll
+          md c:\Spice64\include
+          copy src\include\ngspice\sharedspice.h c:\Spice64\include
+          c:
+          cd \Spice64
+          move bin\ngspice.exe bin\ngspice_con.exe
+          move bin\gui.exe bin\ngspice.exe
+          echo Create README.ngspice
+          echo This binary build of ngspice was built at https://github.com/gatk555/ngspice. > README.ngspice
+          echo "The source code came from the pre-master-47 branch with head revision:" >> README.ngspice
+          echo( >> README.ngspice
+          echo ${{ needs.build-macos-arm64.outputs.HEAD_DESC }} >> README.ngspice
+          echo( >> README.ngspice
+          echo Install to C:\Spice64\. >> README.ngspice
+      - uses: actions/checkout@v6
+        with:
+          repository: gatk555/test
+      - name: Add OSDI files
+        shell: cmd
+        run: |
+          curl.exe -L -O "https://github.com/dwarning/VA-Models/releases/download/v2.2/VA-Models-osdilibs.zip"
+          unzip VA-Models-osdilibs.zip
+          copy osdilibs\*.osdi C:\Spice64\lib\ngspice
+      - name: Save
+        uses: actions/upload-artifact@v6
+        with:
+          name: Ngspice pre-master-47, Windows X86-64
+          path: C:\Spice64
+
   build-win_msys:
     runs-on: windows-latest
     needs: build-macos-arm64
@@ -148,6 +231,14 @@ jobs:
           cp /ucrt64/bin/libstdc++-6.dll /C/Spice64/bin
           cp /ucrt64/bin/libgcc_s_seh-1.dll /C/Spice64/bin
           cp /ucrt64/bin/libwinpthread-1.dll /C/Spice64/bin
+          cp /ucrt64/bin/libsndfile-1.dll /C/Spice64/bin
+          cp /ucrt64/bin/libsamplerate-0.dll /C/Spice64/bin
+      - name: Add OSDI files
+        shell: cmd
+        run: |
+          curl.exe -L -O "https://github.com/dwarning/VA-Models/releases/download/v2.2/VA-Models-osdilibs.zip"
+          unzip VA-Models-osdilibs.zip
+          copy osdilibs\*.osdi C:\Spice64\lib\ngspice
       - name: Save
         uses: actions/upload-artifact@v6
         with:
