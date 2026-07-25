@@ -30,6 +30,7 @@ Author: 1985 Wayne A. Christopher
 #include "numparam/general.h"
 
 #include "com_set.h"
+#include "encodedet.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -122,7 +123,7 @@ wordlist* sourceinfo = NULL;
 
 static bool has_if = FALSE; /* if we have an .if ... .endif pair */
 
-static char *readline(FILE *fd);
+static char *readline(FILE *fd, FileEncoding encoding);
 int get_number_terminals(char *c);
 static void inp_stripcomments_deck(struct card *deck, bool cs);
 static void inp_stripcomments_line(char *s, bool cs, bool inc);
@@ -209,7 +210,7 @@ struct inp_read_t {
 };
 
 static struct inp_read_t inp_read( FILE *fp, int call_depth, const char *dir_name,
-    const char* file_name, bool comfile, bool intfile);
+    const char* file_name, bool comfile, bool intfile, FileEncoding enc);
 
 
 #ifdef XSPICE
@@ -595,7 +596,7 @@ static struct library *read_a_lib(const char *y, const char *dir_name)
         lib->habitat = ngdirname(yy);
 
         lib->deck =
-            inp_read(newfp, 1 /*dummy*/, lib->habitat, lib->realpath, FALSE, FALSE).cc;
+            inp_read(newfp, 1 /*dummy*/, lib->habitat, lib->realpath, FALSE, FALSE, ENCODING_UNKNOWN).cc;
 
         struct card* tmpdeck;
         int cnumber = 1;
@@ -1059,7 +1060,7 @@ struct card *inp_readall(FILE *fp, const char *dir_name, const char* file_name,
        This is the next major step:
        Reading the netlist line by line, handle .include and .lib,
        line continuation and upper/lower casing */
-    rv = inp_read(fp, 0, dir_name, file_name, comfile, intfile);
+    rv = inp_read(fp, 0, dir_name, file_name, comfile, intfile, ENCODING_UNKNOWN);
     cc = rv.cc;
 
     /* skip all pre-processing for expanded input files created by 'listing r',
@@ -1318,7 +1319,7 @@ static char *skip_token(char *s)
 
 
 static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name,
-    const char* file_name, bool comfile, bool intfile)
+    const char* file_name, bool comfile, bool intfile, FileEncoding encoding)
     /* fp: in, pointer to file to be read,
        call_depth: in, nested call to fcn
        dir_name: in, name of directory of file to be read
@@ -1379,14 +1380,14 @@ static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name
                     buffer = copy(big_buff);
             }
             else {
-                buffer = readline(fp);
+                buffer = readline(fp, encoding);
                 if (!buffer)
                     break;
             }
 
 #else
 
-            buffer = readline(fp);
+            buffer = readline(fp, encoding);
             if (!buffer) {
                 break;
             }
@@ -1403,23 +1404,23 @@ static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name
             continue;
         }
 
-        /* Strip a UTF-8 byte order mark at the start of a line -- i.e. at
-           the start of a file written by a Windows editor.  A BOM is never
-           legal SPICE syntax; left in place it glues to the first token
-           (fatal ".subckt/.ends mismatch" class errors in included libs). */
-        if (!intfile && strncmp(buffer, "\xEF\xBB\xBF", 3) == 0)
-            memmove(buffer, buffer + 3, strlen(buffer + 3) + 1);
-
-        /* OK -- now we have loaded the next line into 'buffer'.  Process it.
-         */
+        /* after reading the first line */
         if (first) {
             /* Files starting *ng_script are user supplied command files. */
-
             if (ciprefix("*ng_script", buffer))
                 comfile = TRUE;
+            /* Strip a UTF-8 or UTF-16 byte order mark at the start
+               of a file, e.g.  written by a Windows editor.  A BOM is never
+               legal SPICE syntax; left in place it glues to the first token
+               (fatal ".subckt/.ends mismatch" class errors in included libs). */
+            if (!intfile && (encoding == ENCODING_UTF8_WITH_BOM))
+                memmove(buffer, buffer + 3, strlen(buffer + 3) + 1);
+            else if (!intfile && (encoding == ENCODING_UTF16LE_WITH_BOM))
+                memmove(buffer, buffer + 2, strlen(buffer + 2) + 1);
             first = FALSE;
         }
-
+        /* OK -- now we have loaded the next line into 'buffer'.  Process it.
+         *
         /* If input line is blank, ignore it & continue looping.  */
         if ((strcmp(buffer, "\n") == 0) || (strcmp(buffer, "\r\n") == 0))
             if (call_depth != 0 || (call_depth == 0 && cc != NULL)) {
@@ -1578,6 +1579,26 @@ static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name
                     }
                 }
 
+                /* test input file for its encoding */
+                encoding = ENCODING_UNKNOWN;
+                FILE* enfile = fopen(y_resolved, "rb");
+                if (enfile) {
+                    encoding = detect_file_encoding(enfile);
+                    switch (encoding) {
+                    case ENCODING_UTF8_WITH_BOM:
+                    case ENCODING_UTF16LE_WITH_BOM:
+                    case ENCODING_UTF16LE_NO_BOM:
+                        fprintf(stdout, "Note: .include file '%s' encoding: %s\n", y, encoding_to_string(encoding));
+                        break;
+                    case ENCODING_BINARY:
+                        fprintf(stderr, "Warning: Binary .inlude file '%s' is not supported, skipped!\n", y);
+                        fclose(enfile);
+                        continue;
+                    default: /* do nothing */;
+                    }
+                    fclose(enfile);
+                }
+
                 newfp = fopen(y_resolved, "r");
 
                 if (!newfp) {
@@ -1597,7 +1618,7 @@ static struct inp_read_t inp_read(FILE* fp, int call_depth, const char* dir_name
                 y_dir_name = ngdirname(y_resolved);
 
                 newcard = inp_read(
-                    newfp, call_depth + 1, y_dir_name, y_resolved, FALSE, FALSE)
+                    newfp, call_depth + 1, y_dir_name, y_resolved, FALSE, FALSE, encoding)
                     .cc; /* read stuff in include file into
                             netlist */
 
@@ -2301,7 +2322,7 @@ static char *inp_pathresolve_at(const char *name, const char *dir)
 
 #define STRGROW 256
 
-static char *readline(FILE *fd)
+static char *readline(FILE *fd, FileEncoding encoding)
 {
     int c;
     int memlen;
@@ -2320,6 +2341,11 @@ static char *readline(FILE *fd)
 
         if (c == '\r')
             continue;
+
+        if (encoding == ENCODING_UTF16LE_WITH_BOM || encoding == ENCODING_UTF16LE_NO_BOM)
+            if (c == 0)
+                continue;
+
         strptr[strlen++] = (char) c;
 
         if (strlen >= memlen) {
@@ -9765,7 +9791,8 @@ utf8_syntax_check(struct card *deck)
         if (s) {
             fprintf(stderr, "Error: UTF-8 syntax error in input deck,\n    line %d at token/word %s\n", card->linenum_orig, s);
             fprintf(stderr, "    input file %s\n", card->linesource);
-            controlled_exit(1);
+            if (ft_stricterror)
+                controlled_exit(1);
         }
     }
 }
