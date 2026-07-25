@@ -908,6 +908,7 @@
     <ClInclude Include="..\src\frontend\dimens.h" />
     <ClInclude Include="..\src\frontend\display.h" />
     <ClInclude Include="..\src\frontend\dotcards.h" />
+    <ClInclude Include="..\src\frontend\encodedet.h" />
     <ClInclude Include="..\src\frontend\error.h" />
     <ClInclude Include="..\src\frontend\evaluate.h" />
     <ClInclude Include="..\src\frontend\fourier.h" />
@@ -1524,6 +1525,7 @@
     <ClCompile Include="..\src\frontend\display.c" />
     <ClCompile Include="..\src\frontend\dotcards.c" />
     <ClCompile Include="..\src\frontend\dvec.c" />
+    <ClCompile Include="..\src\frontend\encodedet.c" />
     <ClCompile Include="..\src\frontend\error.c" />
     <ClCompile Include="..\src\frontend\evaluate.c" />
     <ClCompile Include="..\src\frontend\fourier.c" />

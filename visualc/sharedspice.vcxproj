@@ -647,6 +647,7 @@ lib /machine:x64 /def:..\..\fftw-3.3-dll64\libfftw3-3.def /out:$(IntDir)libfftw3
     <ClInclude Include="..\src\frontend\dimens.h" />
     <ClInclude Include="..\src\frontend\display.h" />
     <ClInclude Include="..\src\frontend\dotcards.h" />
+    <ClInclude Include="..\src\frontend\encodedet.h" />
     <ClInclude Include="..\src\frontend\error.h" />
     <ClInclude Include="..\src\frontend\evaluate.h" />
     <ClInclude Include="..\src\frontend\fourier.h" />
@@ -1261,6 +1262,7 @@ lib /machine:x64 /def:..\..\fftw-3.3-dll64\libfftw3-3.def /out:$(IntDir)libfftw3
     <ClCompile Include="..\src\frontend\display.c" />
     <ClCompile Include="..\src\frontend\dotcards.c" />
     <ClCompile Include="..\src\frontend\dvec.c" />
+    <ClCompile Include="..\src\frontend\encodedet.c" />
     <ClCompile Include="..\src\frontend\error.c" />
     <ClCompile Include="..\src\frontend\evaluate.c" />
     <ClCompile Include="..\src\frontend\fourier.c" />
