@@ -134,13 +134,7 @@ CKTtopologyReduce(CKTcircuit *ckt)
                     else if (nn > 0)
                         degree[nn]--;
                     removed_this_pass++;
-                    if (ft_stricterror) {
-                        fprintf(stderr,
-                            "Dangling capacitor %s "
-                            "(floating node %s) found in netlist.\n", ci->CAPname,
-                            (char*)CKTnodName(ckt, (mode & 2) ? nn : pn));
-                    }
-                    else if (reported++ < 40)
+                    if (reported++ < 40)
                         fprintf(stdout,
                             "Topology reduction: removed dangling capacitor %s "
                             "(floating node %s)\n", ci->CAPname,
@@ -171,17 +165,11 @@ CKTtopologyReduce(CKTcircuit *ckt)
                     else if (nn > 0)
                         degree[nn]--;
                     removed_this_pass++;
-                    if (ft_stricterror) {
-                        fprintf(stderr,
-                            "Dangling resistor %s "
-                            "(floating node %s) found in netlist.\n", ri->RESname,
-                            (char*)CKTnodName(ckt, (mode & 2) ? nn : pn));
-                    }
-                    else if (reported++ < 40)
+                    if (reported++ < 40)
                         fprintf(stdout,
                             "Topology reduction: removed dangling resistor %s "
                             "(floating node %s)\n", ri->RESname,
-                            (char*)CKTnodName(ckt, (mode & 2) ? nn : pn));
+                            (char *)CKTnodName(ckt, (mode & 2) ? nn : pn));
                 }
         }
 
@@ -190,17 +178,9 @@ CKTtopologyReduce(CKTcircuit *ckt)
             break;
     }
 
-    if (removed_total) {
-        if (ft_stricterror) {
-            fprintf(stderr, "\nError: %d dangling passive(s) found.\n "
-                "    Please correct the netlist.\n", removed_total);
-            FREE(degree);
-            controlled_exit(EXIT_BAD);
-        }
-
+    if (removed_total)
         fprintf(stdout, "Topology reduction: %d dangling passive(s) removed "
-            "from the matrix.\n", removed_total);
-    }
+                "from the matrix.\n", removed_total);
 
     FREE(degree);
 }
