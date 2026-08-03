@@ -85,7 +85,7 @@ BJTnoise(int mode, int operation, GENmodel*genmodel, CKTcircuit *ckt,
                 case N_DENS:
 
                     if (inst->BJTtempGiven)
-                        dtemp = inst->BJTtemp - ckt->CKTtemp + (model->BJTtnom-CONSTCtoK);
+                        dtemp = inst->BJTtemp - ckt->CKTtemp;
                     else
                         dtemp = inst->BJTdtemp;
 
