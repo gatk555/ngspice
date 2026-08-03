@@ -86,7 +86,7 @@ DIOnoise(int mode, int operation, GENmodel *genmodel, CKTcircuit *ckt,
                 case N_DENS:
 
                     if (inst->DIOtempGiven)
-                        dtemp = inst->DIOtemp - ckt->CKTtemp + (model->DIOnomTemp-CONSTCtoK);
+                        dtemp = inst->DIOtemp - ckt->CKTtemp;
                     else
                         dtemp = inst->DIOdtemp;
 

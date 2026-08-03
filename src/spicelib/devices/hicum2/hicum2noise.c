@@ -128,7 +128,7 @@ HICUMnoise (int mode, int operation, GENmodel *genmodel, CKTcircuit *ckt, Ndata 
                 case N_DENS:
 
                     if (here->HICUMtempGiven)
-                        dtemp = here->HICUMtemp - ckt->CKTtemp + (model->HICUMtnom-CONSTCtoK);
+                        dtemp = here->HICUMtemp - ckt->CKTtemp;
                     else
                         dtemp = here->HICUMdtemp;
 
