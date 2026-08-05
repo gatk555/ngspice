@@ -95,7 +95,7 @@ VBICnoise (int mode, int operation, GENmodel *genmodel, CKTcircuit *ckt, Ndata *
                 case N_DENS:
 
                     if (inst->VBICtempGiven)
-                        dtemp = inst->VBICtemp - ckt->CKTtemp + (model->VBICtnom-CONSTCtoK);
+                        dtemp = inst->VBICtemp - ckt->CKTtemp;
                     else
                         dtemp = inst->VBICdtemp;
 
