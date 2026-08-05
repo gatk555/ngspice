@@ -3943,8 +3943,13 @@ static struct card *expand_section_ref(struct card *c, const char *dir_name)
     s = skip_non_ws(line);
     while (isspace_c(*s))
         s++;
-    if (isquote(*s))
-        for (s_e = ++s; *s_e && !isquote(*s_e); s_e++) ;
+    if (isquote(*s)) {
+        for (s_e = ++s; *s_e && !isquote(*s_e); s_e++);
+        if (!*s_e) {
+            fprintf(stderr, "\nError: Missing second quote in line \n      %s", line);
+            controlled_exit(EXIT_FAILURE);
+        }
+    }
     else
         for (s_e = s; *s_e && !isspace_c(*s_e) && !isquote(*s_e); s_e++) ;
     y = s_e;
