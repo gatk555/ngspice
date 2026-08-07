@@ -587,15 +587,15 @@ resume:
     }
     /* Try to equalise the last two time steps before the breakpoint,
        if the second step would be smaller than CKTdelta otherwise.*/
-    else if (!(ckt->CKTbreaks[0] == ckt->CKTfinalTime) && ckt->CKTtime + 1.9 * ckt->CKTdelta > ckt->CKTbreaks[0]) {
+    else if (!AlmostEqualUlps(ckt->CKTtime + ckt->CKTdelta, ckt->CKTfinalTime, 100)
+             && ckt->CKTtime + 1.9 * ckt->CKTdelta > ckt->CKTbreaks[0]) {
         ckt->CKTsaveDelta = ckt->CKTdelta;
-        ckt->CKTdelta = (ckt->CKTbreaks[0] - ckt->CKTtime) / 2.;
+        ckt->CKTdelta = (ckt->CKTbreaks[0] - ckt->CKTtime) / 2.0;
 #ifdef STEPDEBUG
-        fprintf(stdout, "Delta equalising step at time %e with delta %e and breakpoint at %e\n", 
-            ckt->CKTtime, ckt->CKTdelta, ckt->CKTbreaks[0]);
+        fprintf(stdout, "Delta equalising step at time %e with new delta %e,\n remaining time %e and breakpoint at %e\n",
+            ckt->CKTtime, ckt->CKTdelta, ckt->CKTbreaks[0] - ckt->CKTtime, ckt->CKTbreaks[0]);
 #endif
     }
-
 #ifdef SHARED_MODULE
         /* Either directly go to next time step, or modify ckt->CKTdelta depending on
            synchronization requirements. sharedsync() returns 0. */
