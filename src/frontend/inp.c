@@ -1274,6 +1274,8 @@ inp_spsource(FILE *fp, bool comfile, char *filename, bool intfile)
 #ifdef OSDI
             inputdir = dir_name;
 #endif
+            /* If 'controlswait' has been set during the previous for loop step,
+               all further controls will be handled by exec_control() only. */
             if (cp_getvar("controlswait", CP_BOOL, NULL, 0)) {
                 if (wl)
                     exec_controls(wl_copy(wl));
