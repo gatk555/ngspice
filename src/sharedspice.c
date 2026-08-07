@@ -2578,7 +2578,7 @@ static int totalreset(void)
 
     destroy_wallace();
 
-//    rem_controls();
+    rem_controls();
 
     while (ft_curckt) {
         com_remcirc(NULL);
