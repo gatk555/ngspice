@@ -352,7 +352,6 @@ static void printsend(void);
 extern wordlist* sourceinfo;
 
 static int totalreset(void);
-extern void rem_controls(void);
 extern void destroy_wallace(void);
 extern void sh_delete_myvec(void);
 extern IFsimulator SIMinfo;
@@ -500,7 +499,6 @@ _cthread_run(void *controls)
 #ifdef HAVE_LIBPTHREAD
     cont_condition = FALSE;
 #endif
-    wl_free(controls);
     return NULL;
 }
 
@@ -707,7 +705,7 @@ runc(char* command)
         /* bg_ctrl prepare running the controls after bg_run */
         } else if (!strcmp(buf, "bg_ctrl")) {
             if (shcontrols)
-                exec_controls(wl_copy(shcontrols));
+                exec_controls(shcontrols);
             else
                 fprintf(stderr, "Warning: No .control commands available, bg_ctrl skipped\n");
             return 0;
@@ -2006,6 +2004,11 @@ void SetAnalyse(
         ng_id2 = ng_idl;
         strncpy(OldAn2, Analyse, 127); // strcpy(OldAn2, "?"); /* initial value */
     }
+    else if (ng_id1 && ng_id1 != ng_idl && ng_id2 != ng_idl) {
+        ng_id2 = ng_idl;
+        strncpy(OldAn2, Analyse, 127);
+        OldPercent = 0;
+    }
 
     if (ng_idl == ng_id1) {
         thread1 = TRUE;
@@ -2063,10 +2066,11 @@ void SetAnalyse(
     /* info every one percent of progress:
        actual time, progress,
        to catch linearity of progress of simulation */
-    if (ft_ngdebug && !strcmp(Analyse, "tran"))
-       if ((int)((double)DecaPercent/10.) > (int)((double)OldPercent/10.)) {
-          printf("%3.1f%% percent progress after %4.2f seconds.\n", (double)DecaPercent/10., seconds());
-       }
+    if (ft_ngdebug && !strcmp(Analyse, "tran")) {
+        if ((int)((double)DecaPercent / 10.) > (int)((double)OldPercent / 10.)) {
+            printf("%3.1f%% percent progress after %4.2f seconds.\n", (double)DecaPercent / 10., seconds());
+        }
+    }
     if(thread1)
         OldPercent1 = DecaPercent;
     else
@@ -2574,7 +2578,7 @@ static int totalreset(void)
 
     destroy_wallace();
 
-    rem_controls();
+//    rem_controls();
 
     while (ft_curckt) {
         com_remcirc(NULL);
