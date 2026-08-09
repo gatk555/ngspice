@@ -278,8 +278,11 @@ void ft_pyplot(double *xlims, double *ylims,
         fprintf(file, "    _ax.grid(True, which='both')\n");
     if (xlims)
         fprintf(file, "    _ax.set_xlim(%e, %e)\n", xlims[0], xlims[1]);
-    if (ylims && !ylog)
-        fprintf(file, "    _ax.set_ylim(%e, %e)\n", ylims[0], ylims[1]);
+    /* expand the limits a little (0.5%) to avoid double precision deviation on Windows */
+    if (ylims && !ylog) {
+        double extrange = (ylims[1] - ylims[0]) * 0.005;
+        fprintf(file, "    _ax.set_ylim(%e, %e)\n", ylims[0] - extrange, ylims[1] + extrange);
+    }
     fprintf(file, "    _ax.legend()\n");
     if (xlabel) {
         text = cp_unquote(xlabel);
