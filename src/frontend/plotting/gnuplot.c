@@ -298,7 +298,10 @@ void ft_gnuplot(double *xlims, double *ylims,
         contours = has_contour_data(vecs);
     }
 
-    extrange = 0.05 * (ylims[1] - ylims[0]);
+    if (ylims)
+        extrange = 0.005 * (ylims[1] - ylims[0]);
+    else
+        extrange = 0.;
 
     if (!cp_getvar("gnuplot_terminal", CP_STRING,
             terminal, sizeof(terminal))) {
@@ -626,8 +629,7 @@ void ft_gnuplot(double *xlims, double *ylims,
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
     /* for external fcn system() */
-    // (void) sprintf(buf, "start /B wgnuplot %s -" ,  filename_plt);
-    (void) sprintf(buf, "start /B wgnuplot -persist %s " ,  filename_plt);
+    (void) snprintf(buf, sizeof(buf), "start /B wgnuplot -persist %s " ,  filename_plt);
     _flushall();
 #else
     /* for external fcn system() from LINUX environment */
