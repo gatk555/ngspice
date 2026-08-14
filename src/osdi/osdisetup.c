@@ -216,8 +216,9 @@ int OSDIsetup(SMPmatrix *matrix, GENmodel *inModel, CKTcircuit *ckt,
     descr->setup_model((void *)&handle, model, sim_params, &init_info);
     res = handle_init_info(init_info, descr);
     if (res) {
-      errRtn = "OSDI setup_model";
-      continue;
+        fprintf(stderr, "Error in model %s\n", gen_model->GENmodName);
+        errRtn = "OSDI setup_model";
+        return res;
     }
 
     for (gen_inst = gen_model->GENinstances; gen_inst;
@@ -254,8 +255,9 @@ int OSDIsetup(SMPmatrix *matrix, GENmodel *inModel, CKTcircuit *ckt,
                             connected_terminals, sim_params, &init_info);
       res = handle_init_info(init_info, descr);
       if (res) {
-        errRtn = "OSDI setup_instance";
-        continue;
+          fprintf(stderr, "Error in instance (or model for instance) %s\n", gen_inst->GENname);
+          errRtn = "OSDI setup_instance";
+          return res;
       }
 
       /* setup the instance nodes */
