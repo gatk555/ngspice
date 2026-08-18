@@ -386,17 +386,23 @@ extern OsdiObjectFile load_object_file(const char *input) {
 
   if (OSDI_DESCRIPTOR_SIZE) {
     // This must be openvaf-reloaded 
-    // Must be version>=0.4
+    // Must be version==0.4
     if (!(
-      (OSDI_VERSION_MAJOR == 0 && OSDI_VERSION_MINOR >= 4) ||
-      OSDI_VERSION_MAJOR >= 1
+      (OSDI_VERSION_MAJOR == 0 && OSDI_VERSION_MINOR == 4)
     )) {
-      printf("NGSPICE supports OpenVAF-reloaded OSDI version >= 0.4 but \"%s\" uses v%d.%d!",
+      printf("NGSPICE supports OpenVAF-reloaded OSDI version 0.4 but \"%s\" uses v%d.%d!",
         path, OSDI_VERSION_MAJOR, OSDI_VERSION_MINOR);
       txfree(path); 
       return INVALID_OBJECT;
     }
+    // Check descriptor size, must be >= descriptor size from the header file
     descriptor_size = *OSDI_DESCRIPTOR_SIZE;
+    if (descriptor_size < sizeof(OsdiDescriptor)) {
+      printf("NGSPICE requires an OSDI descriptor size of at least %zu bytes but \"%s\" uses %zu!",
+        sizeof(OsdiDescriptor), path, descriptor_size);
+      txfree(path);
+      return INVALID_OBJECT;
+    }
   } else {
     // Original OpenVAF, must be version==0.3
     if (OSDI_VERSION_MAJOR != OSDI_VERSION_MAJOR_CURR ||
