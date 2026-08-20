@@ -1721,6 +1721,7 @@
     <ClCompile Include="..\src\misc\util.c" />
     <ClCompile Include="..\src\misc\wlist.c" />
     <ClCompile Include="..\src\ngspice.c" />
+    <ClCompile Include="..\src\osdi\osdiaccept.c" />
     <ClCompile Include="..\src\osdi\osdiacld.c" />
     <ClCompile Include="..\src\osdi\osdicallbacks.c" />
     <ClCompile Include="..\src\osdi\osdiinit.c" />
