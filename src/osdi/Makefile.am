@@ -8,7 +8,8 @@ libosdi_la_SOURCES =	\
 	osdiext.h	\
 	osdiinit.c	\
 	osdiload.c	\
-	osdiacld.c \
+	osdiacld.c	\
+	osdiaccept.c	\
 	osdiparam.c	\
 	osdiregistry.c	\
 	osdinoise.c	\
