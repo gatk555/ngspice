@@ -27,6 +27,11 @@ typedef struct OsdiRegistryEntry {
 #ifdef KLU
   uint32_t matrix_ptr_offset;
 #endif
+  
+  int stable;
+  /* absdelay support: filled at .osdi load time from OSDI_ABSDELAY_* symbols */
+  uint32_t num_absdelays;
+  const void *absdelay_infos;  /* points into the loaded .osdi's OSDI_ABSDELAY_INFOS */
 
 } OsdiRegistryEntry;
 

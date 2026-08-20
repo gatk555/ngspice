@@ -286,6 +286,39 @@ int OSDIsetup(SMPmatrix *matrix, GENmodel *inModel, CKTcircuit *ckt,
         return err;
       }
 
+      /* Allocate extra matrix entries and waveform history for absdelay */
+      if (entry->num_absdelays > 0) {
+        uint32_t *node_mapping =
+            (uint32_t *)(((char *)inst) + descr->node_mapping_offset);
+        OsdiExtraInstData *extra =
+            osdi_extra_instance_data(entry, gen_inst);
+        uint32_t n = entry->num_absdelays;
+        const OsdiAbsDelayInfo *infos = (const OsdiAbsDelayInfo *)entry->absdelay_infos;
+
+        extra->delay_jac_y = TMALLOC(double *, n);
+        extra->delay_jac_z = TMALLOC(double *, n);
+        extra->delay_jac_y_csc = TMALLOC(double *, n);
+        extra->delay_jac_z_csc = TMALLOC(double *, n);
+        extra->delay_jac_y_cx = TMALLOC(double *, n);
+        extra->delay_jac_z_cx = TMALLOC(double *, n);
+        extra->delay_hist  = TMALLOC(double *, n);
+        extra->delay_hist_cap = 0;
+
+        for (uint32_t k = 0; k < n; k++) {
+          int y_spice = (int)node_mapping[infos[k].y_node];
+          int z_spice = (int)node_mapping[infos[k].z_node];
+          extra->delay_jac_y[k] = SMPmakeElt(matrix, z_spice, y_spice);
+          extra->delay_jac_z[k] = SMPmakeElt(matrix, z_spice, z_spice);
+          extra->delay_jac_y_csc[k] = NULL;
+          extra->delay_jac_z_csc[k] = NULL;
+          extra->delay_jac_y_cx[k]  = NULL;
+          extra->delay_jac_z_cx[k]  = NULL;
+          extra->delay_hist[k]  = NULL;
+          if (!extra->delay_jac_y[k] || !extra->delay_jac_z[k])
+            return E_NOMEM;
+        }
+      }
+
       /* reserve space in the state vector*/
       gen_inst->GENstate = *states;
       write_state_ids(descr, inst, (uint32_t)*states);
@@ -484,6 +517,9 @@ int OSDIbindCSC(GENmodel *inModel, CKTcircuit *ckt) {
   /* setup a temporary buffer 
   uint32_t *node_ids = TMALLOC(uint32_t, descr->num_nodes);*/
 
+  BindElement *bindings = ckt->CKTmatrix->SMPkluMatrix->KLUmatrixBindStructCOO;
+  size_t nz = (size_t)ckt->CKTmatrix->SMPkluMatrix->KLUmatrixLinkedListNZ;
+
   for (gen_model = inModel; gen_model; gen_model = gen_model->GENnextModel) {
     /* void *model = osdi_model_data(gen_model); unused */
     for (gen_inst = gen_model->GENinstances; gen_inst;
@@ -493,6 +529,40 @@ int OSDIbindCSC(GENmodel *inModel, CKTcircuit *ckt) {
       int err = init_matrix_klu(ckt->CKTmatrix, descr, inst, matrix_ptrs);
       if (err != (OK)) {
         return err;
+      }
+
+      /* Rebind absdelay Jacobian pointers from COO to KLU CSC format.
+       * init_matrix_klu only handles descr->jacobian_entries; the extra
+       * delay_jac_y/z pointers allocated in OSDIsetup still point into the
+       * COO buffer and must be rebound here so absdelay_stamp_dc/osdiacld
+       * write into the live KLU matrix. */
+      if (entry->num_absdelays > 0) {
+        OsdiExtraInstData *extra = osdi_extra_instance_data(entry, gen_inst);
+        BindElement tmp;
+        for (uint32_t k = 0; k < entry->num_absdelays; k++) {
+          if (extra->delay_jac_y[k]) {
+            tmp.COO = extra->delay_jac_y[k];
+            BindElement *m = (BindElement *)bsearch(&tmp, bindings, nz,
+                                                    sizeof(BindElement),
+                                                    BindCompare);
+            if (m) {
+              extra->delay_jac_y_csc[k] = m->CSC;
+              extra->delay_jac_y_cx[k]  = m->CSC_Complex;
+              extra->delay_jac_y[k]     = m->CSC;
+            }
+          }
+          if (extra->delay_jac_z[k]) {
+            tmp.COO = extra->delay_jac_z[k];
+            BindElement *m = (BindElement *)bsearch(&tmp, bindings, nz,
+                                                    sizeof(BindElement),
+                                                    BindCompare);
+            if (m) {
+              extra->delay_jac_z_csc[k] = m->CSC;
+              extra->delay_jac_z_cx[k]  = m->CSC_Complex;
+              extra->delay_jac_z[k]     = m->CSC;
+            }
+          }
+        }
       }
     }
   }
@@ -520,6 +590,22 @@ int OSDIupdateCSC(GENmodel *inModel, CKTcircuit *ckt, bool complex) {
       int err = update_matrix_klu(descr, inst, matrix_ptrs, complex);
       if (err != (OK)) {
         return err;
+      }
+
+      /* Switch the absdelay delay-row pointers between the real (CSC) and
+       * complex (CSC_Complex) KLU arrays, mirroring the regular Jacobian.
+       * Without this, the AC complex solve would write the delay stamps into
+       * the unused real array, leaving the delay rows empty -> singular. */
+      if (entry->num_absdelays > 0) {
+        OsdiExtraInstData *extra = osdi_extra_instance_data(entry, gen_inst);
+        for (uint32_t k = 0; k < entry->num_absdelays; k++) {
+          if (extra->delay_jac_y_csc[k])
+            extra->delay_jac_y[k] =
+                complex ? extra->delay_jac_y_cx[k] : extra->delay_jac_y_csc[k];
+          if (extra->delay_jac_z_csc[k])
+            extra->delay_jac_z[k] =
+                complex ? extra->delay_jac_z_cx[k] : extra->delay_jac_z_csc[k];
+        }
       }
     }
   }
