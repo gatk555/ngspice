@@ -135,8 +135,7 @@ static double absdelay_lookup(const OsdiExtraInstData *extra, uint32_t k,
 static void absdelay_stamp_dc(void *inst, OsdiExtraInstData *extra,
                                const OsdiRegistryEntry *entry,
                                const OsdiDescriptor *descr) {
-  uint32_t n = entry->num_absdelays;
-  const OsdiAbsDelayInfo *infos = (const OsdiAbsDelayInfo *)entry->absdelay_infos;
+  uint32_t n = descr->absdelay_count;
   uint32_t *node_mapping =
       (uint32_t *)(((char *)inst) + descr->node_mapping_offset);
 
@@ -157,11 +156,10 @@ static void absdelay_stamp_tran(CKTcircuit *ckt, GENinstance *gen_inst,
                                 const OsdiRegistryEntry *entry,
                                 const OsdiDescriptor *descr,
                                 bool is_init_tran) {
-  uint32_t n = entry->num_absdelays;
+  uint32_t n = descr->absdelay_count;
   if (n == 0)
     return;
-
-  const OsdiAbsDelayInfo *infos = (const OsdiAbsDelayInfo *)entry->absdelay_infos;
+  
   uint32_t *node_mapping =
       (uint32_t *)(((char *)inst) + descr->node_mapping_offset);
 
@@ -199,11 +197,18 @@ static void absdelay_stamp_tran(CKTcircuit *ckt, GENinstance *gen_inst,
     return;
 
   for (uint32_t k = 0; k < n; k++) {
-    uint32_t y_mapped = node_mapping[infos[k].y_node];
-    uint32_t z_mapped = node_mapping[infos[k].z_node];
+    uint32_t y_mapped = node_mapping[descr->absdelays[k].y_node];
+    uint32_t z_mapped = node_mapping[descr->absdelays[k].z_node];
 
     /* Read td from OSDI instance data */
-    double td = *((double *)(((char *)inst) + infos[k].td_offset));
+    double td = *((double *)(((char *)inst) + descr->absdelays[k].td_offset));
+    uint32_t maxdelay_offset = descr->absdelays[k].maxdelay_offset;
+    if (maxdelay_offset!=UINT32_MAX) {
+      double tdmax = *((double *)(((char *)inst) + maxdelay_offset));
+      if (td>tdmax) {
+        td = tdmax;
+      }
+    }
     if (td < 0.0)
       td = 0.0;
 
@@ -438,9 +443,10 @@ extern int OSDIload(GENmodel *inModel, CKTcircuit *ckt) {
       load(ckt, gen_inst, model, inst, extra_inst_data, is_tran, is_init_tran,
            descr);
       if (is_tran) {
-        absdelay_stamp_tran(ckt, gen_inst, inst, extra_inst_data, entry,
+        if (entry->experimental)
+          absdelay_stamp_tran(ckt, gen_inst, inst, extra_inst_data, entry,
                             descr, is_init_tran);
-      } else if (entry->num_absdelays > 0) {
+      } else if (entry->experimental && descr->absdelay_count > 0) {
         absdelay_stamp_dc(inst, extra_inst_data, entry, descr);
       }
       eval_flags |= extra_inst_data->eval_flags;
@@ -464,9 +470,10 @@ extern int OSDIload(GENmodel *inModel, CKTcircuit *ckt) {
         load(ckt, gen_inst, model, inst, extra_inst_data, is_tran, is_init_tran,
              descr);
         if (is_tran) {
-          absdelay_stamp_tran(ckt, gen_inst, inst, extra_inst_data, entry,
-                              descr, is_init_tran);
-        } else if (entry->num_absdelays > 0) {
+          if (entry->experimental)
+            absdelay_stamp_tran(ckt, gen_inst, inst, extra_inst_data, entry,
+                                descr, is_init_tran);
+        } else if (entry->experimental && descr->absdelay_count > 0) {
           absdelay_stamp_dc(inst, extra_inst_data, entry, descr);
         }
         eval_flags |= extra_inst_data->eval_flags;

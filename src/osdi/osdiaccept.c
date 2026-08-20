@@ -29,8 +29,9 @@
 
 int OSDIaccept(CKTcircuit *ckt, GENmodel *inModel) {
   OsdiRegistryEntry *entry = osdi_reg_entry_model(inModel);
+  const OsdiDescriptor *descr = entry->descriptor;
 
-  if (entry->num_absdelays == 0)
+  if (!entry->experimental || descr->absdelay_count == 0)
     return OK;
 
   bool is_tran = (bool)(ckt->CKTmode & MODETRAN);
@@ -43,9 +44,7 @@ int OSDIaccept(CKTcircuit *ckt, GENmodel *inModel) {
   if (ckt->CKTtimePoints == NULL || ckt->CKTtimeIndex < 0)
     return OK;
 
-  const OsdiDescriptor *descr = entry->descriptor;
-  const OsdiAbsDelayInfo *infos = (const OsdiAbsDelayInfo *)entry->absdelay_infos;
-  uint32_t n = entry->num_absdelays;
+  uint32_t n = descr->absdelay_count;
   int ti = ckt->CKTtimeIndex;
 
   for (GENmodel *gen_model = inModel; gen_model;
@@ -75,7 +74,7 @@ int OSDIaccept(CKTcircuit *ckt, GENmodel *inModel) {
           (uint32_t *)(((char *)inst) + descr->node_mapping_offset);
 
       for (uint32_t k = 0; k < n; k++) {
-        uint32_t y_mapped = node_mapping[infos[k].y_node];
+        uint32_t y_mapped = node_mapping[descr->absdelays[k].y_node];
         /* Store the CONVERGED V(y_synth) at the just-accepted timepoint. */
         extra->delay_hist[k][ti] = ckt->CKTrhsOld[y_mapped];
       }

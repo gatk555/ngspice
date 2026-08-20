@@ -73,7 +73,7 @@ typedef struct OsdiExtraInstData {
   uint32_t eval_flags;
 
   /* Waveform history for absdelay — one row per slot, indexed by timepoint. */
-  double **delay_hist;        /* [num_absdelays][capacity]  */
+  double **delay_hist;        /* [absdelay_count][capacity]  */
   uint32_t delay_hist_cap;    /* allocated timepoints in each row  */
 
   /* Pre-allocated KLU/sparse matrix pointers for the delay equation rows.

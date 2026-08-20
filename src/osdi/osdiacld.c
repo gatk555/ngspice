@@ -51,14 +51,19 @@ int OSDIacLoad(GENmodel *inModel, CKTcircuit *ckt) {
        * The matrix entries were pre-allocated in OSDIsetup as real pointers;
        * for AC we use the complex variants instead.
        */
-      if (entry->num_absdelays > 0) {
-        const OsdiAbsDelayInfo *infos =
-            (const OsdiAbsDelayInfo *)entry->absdelay_infos;
+      if (entry->experimental && descr->absdelay_count > 0) {
         OsdiExtraInstData *extra = osdi_extra_instance_data(entry, gen_inst);
         double omega = ckt->CKTomega;
 
-        for (uint32_t k = 0; k < entry->num_absdelays; k++) {
-          double td = *((double *)(((char *)inst) + infos[k].td_offset));
+        for (uint32_t k = 0; k < descr->absdelay_count; k++) {
+          double td = *((double *)(((char *)inst) + descr->absdelays[k].td_offset));
+          uint32_t maxdelay_offset = descr->absdelays[k].maxdelay_offset;
+          if (maxdelay_offset!=UINT32_MAX) {
+            double tdmax = *((double *)(((char *)inst) + maxdelay_offset));
+            if (td>tdmax) {
+              td = tdmax;
+            }
+          }
           if (td < 0.0) td = 0.0;
 
           /* e^{-j*omega*td} = cos(omega*td) - j*sin(omega*td)

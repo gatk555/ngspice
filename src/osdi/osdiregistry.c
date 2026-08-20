@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include "osdi.h"
+#include "osdilegacy.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -350,7 +351,7 @@ extern OsdiObjectFile load_object_file(const char *input) {
   void *handle;
   char *error;
   const void *sym;
-  int stable = 0;
+  int experimental = 0;
   /* ensure the hashtable exists */
   if (!known_object_files) {
     known_object_files = nghash_init_pointer(8);
@@ -380,20 +381,23 @@ extern OsdiObjectFile load_object_file(const char *input) {
   // Try to get OSDI_DESCRIPTOR_SIZE
   GET_PTR_NOCHECK(OSDI_DESCRIPTOR_SIZE, uint32_t);
   size_t descriptor_size;
-
+  
   // Get major and minor OSDI version  
   GET_CONST(OSDI_VERSION_MAJOR, uint32_t);
   GET_CONST(OSDI_VERSION_MINOR, uint32_t);
 
   if (OSDI_DESCRIPTOR_SIZE) {
     // This must be openvaf-reloaded 
+    size_t expected_descriptor_size;
     // Must be version==0.4
     if (OSDI_VERSION_MAJOR == 0 && OSDI_VERSION_MINOR == 4) {
       // Stable
-      stable = 1;
+      experimental = 0;
+      expected_descriptor_size = sizeof(OsdiDescriptor04);
     } else if (OSDI_VERSION_MAJOR == 0 && OSDI_VERSION_MINOR == 5) {
       // Experimental
-      stable = 0;
+      experimental = 1;
+      expected_descriptor_size = sizeof(OsdiDescriptor);
     } else {
       // Not supported
       printf("NGSPICE supports OpenVAF-reloaded OSDI version 0.4 but \"%s\" uses v%d.%d!",
@@ -403,7 +407,7 @@ extern OsdiObjectFile load_object_file(const char *input) {
     }
     // Check descriptor size, must be >= descriptor size from the header file
     descriptor_size = *OSDI_DESCRIPTOR_SIZE;
-    if (descriptor_size < sizeof(OsdiDescriptor)) {
+    if (descriptor_size < expected_descriptor_size) {
       printf("NGSPICE requires an OSDI descriptor size of at least %zu bytes but \"%s\" uses %zu!",
         sizeof(OsdiDescriptor), path, descriptor_size);
       txfree(path);
@@ -419,8 +423,8 @@ extern OsdiObjectFile load_object_file(const char *input) {
       txfree(path);
       return INVALID_OBJECT;
     }
-    stable = 1;
-    descriptor_size = sizeof(OsdiDescriptor);
+    experimental = 0;
+    descriptor_size = sizeof(OsdiDescriptor03);
   }
   
   GET_CONST(OSDI_NUM_DESCRIPTORS, uint32_t);
@@ -457,13 +461,6 @@ extern OsdiObjectFile load_object_file(const char *input) {
     }
   }
 
-  /* Optional: absdelay descriptor arrays */
-  sym = GET_SYM(handle, "OSDI_ABSDELAY_COUNTS");
-  const uint32_t *absdelay_counts = (const uint32_t *)sym;
-
-  sym = GET_SYM(handle, "OSDI_ABSDELAY_INFOS");
-  const void *absdelay_infos_base = sym;
-
   OsdiRegistryEntry *dst = TMALLOC(OsdiRegistryEntry, OSDI_NUM_DESCRIPTORS);
 
   /* Size of one OsdiAbsDelayInfo struct as exported from OpenVAF:
@@ -497,17 +494,6 @@ extern OsdiObjectFile load_object_file(const char *input) {
       }
     }
 
-    uint32_t n_delays = 0;
-    const void *delays_ptr = NULL;
-    if (absdelay_counts) {
-      n_delays = absdelay_counts[i];
-      if (n_delays > 0 && absdelay_infos_base) {
-        delays_ptr = (const char *)absdelay_infos_base +
-                     absdelay_info_offset * absdelay_info_size;
-        absdelay_info_offset += n_delays;
-      }
-    }
-
     size_t inst_off = calc_osdi_instance_data_off(descr);
     size_t noise_off = calc_osdi_noise_off(descr);
     dst[i] = (OsdiRegistryEntry){
@@ -522,9 +508,7 @@ extern OsdiObjectFile load_object_file(const char *input) {
         .matrix_ptr_offset = (uint32_t)calc_osdi_instance_matrix_off(descr),
 #endif
 
-        .stable = stable, 
-        .num_absdelays = n_delays,
-        .absdelay_infos = delays_ptr,
+        .experimental = experimental, 
     };
   }
 
