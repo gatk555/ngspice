@@ -20,6 +20,7 @@
 
 SECONDS=0
 
+[ -n "$NGSPICE_MAKES" ] || NGSPICE_MAKES=8
 if test "$1" = "d"; then
    if [ ! -d "debug" ]; then
       mkdir debug
@@ -58,11 +59,11 @@ if [ $? -ne 0 ]; then  echo "../configure failed"; exit 1 ; fi
 echo
 # make clean is required for properly making the code models
 echo "cleaning (see make_clean.log)"
-make clean 2>&1 -j8 | tee make_clean.log
+make clean 2>&1 -j $NGSPICE_MAKES | tee make_clean.log
 exitcode=${PIPESTATUS[0]}
 if [ $exitcode -ne 0 ]; then  echo "make clean failed"; exit 1 ; fi
 echo "compiling (see make.log)"
-make 2>&1 -j8 | tee make.log
+make 2>&1 -j $NGSPICE_MAKES | tee make.log
 exitcode=${PIPESTATUS[0]}
 if [ $exitcode -ne 0 ]; then  echo "make failed"; exit 1 ; fi
 # Install to /usr/local
