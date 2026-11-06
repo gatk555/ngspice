@@ -55,7 +55,7 @@ jobs:
           done
 
   build-macos-arm64:
-    runs-on: macos-14
+    runs-on: macos-15
     outputs:
       HEAD_DESC: ${{ steps.set-output.outputs.HEAD_DESC }}
     steps:
